@@ -1,0 +1,2258 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#5b2be0">
+<title>Empréstimo Pessoal</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icones/icone-192.png">
+<link rel="apple-touch-icon" href="icones/apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Empréstimo">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="description" content="App de empréstimo pessoal: simulação, pedido, análise ao vivo, aceite e contrato.">
+<style>
+:root{
+  --roxo:#5b2be0;--roxo-esc:#3b1796;--roxo-soft:#f1ecff;--roxo-linha:#e2d8ff;--coral:#ff6b5e;
+  --bg:#f6f4fc;--card:#fff;--text:#1b1530;--muted:#6b6584;--line:#e9e5f3;
+  --ok:#0f8a5f;--ok-soft:#e5f6ef;--warn:#9a5b00;--warn-soft:#fff4e0;--bad:#c0322a;--bad-soft:#fdecea;
+  --grad:linear-gradient(140deg,#6a3df0 0%,#8b4ff0 58%,#ff7a69 135%);
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{font:15px/1.45 var(--sans);color:var(--text);-webkit-font-smoothing:antialiased;
+  background:radial-gradient(1200px 700px at 15% -10%,#e4d9ff 0%,transparent 60%),radial-gradient(900px 600px at 110% 110%,#ffe1dc 0%,transparent 55%),#f3f0fb}
+button{font:inherit;cursor:pointer;color:inherit}
+input{font:inherit;color:inherit}
+.palco{min-height:100%;display:grid;place-items:center;padding:28px 16px}
+.aparelho{width:400px;background:#17112b;border-radius:48px;padding:11px;box-shadow:0 30px 80px rgba(59,23,150,.28)}
+.app{position:relative;height:820px;background:var(--bg);color:var(--text);border-radius:38px;overflow:hidden;display:flex;flex-direction:column}
+.barra-sis{display:flex;justify-content:space-between;align-items:center;padding:12px 26px 2px;font-size:12px;font-weight:600;color:var(--muted);position:relative;z-index:2}
+.app.escuro .barra-sis{color:#fff}
+.topo{display:flex;align-items:center;gap:8px;padding:6px 14px;position:relative;z-index:2}
+.app.escuro .topo{color:#fff}
+.voltar{width:36px;height:36px;border:0;border-radius:12px;background:transparent;display:grid;place-items:center}
+.voltar:hover{background:rgba(91,43,224,.08)}.app.escuro .voltar:hover{background:rgba(255,255,255,.14)}
+.voltar.oculto{visibility:hidden}
+.marca{display:flex;align-items:center;gap:8px;font-weight:800;letter-spacing:-.2px;flex:1;min-width:0;white-space:nowrap;font-size:14.5px}
+.marca span{overflow:hidden;text-overflow:ellipsis}
+.marca i{width:26px;height:26px;border-radius:8px;background:var(--grad);color:#fff;display:grid;place-items:center;font-style:normal;font-size:14px;font-weight:800}
+.app.escuro .marca i{background:#fff;color:var(--roxo)}
+.avatar{width:34px;height:34px;border-radius:50%;border:0;background:var(--roxo-soft);color:var(--roxo);font-weight:800;font-size:13px}
+.app.escuro .avatar{background:rgba(255,255,255,.2);color:#fff}
+.etapas{padding:2px 18px 10px;position:relative;z-index:2}
+.etapas.oculto{display:none}
+.trilho{display:grid;grid-template-columns:repeat(8,1fr);gap:5px}
+.trilho button{height:30px;border:0;background:none;padding:0;display:grid;place-items:center;position:relative}
+.trilho button::before{content:"";position:absolute;left:0;right:0;top:50%;height:4px;margin-top:-2px;border-radius:4px;background:#e4def3}
+.trilho button.feita::before{background:var(--roxo)}
+.trilho button.atual::before{background:linear-gradient(90deg,var(--roxo),#b79cff)}
+.trilho button.na::before{background:repeating-linear-gradient(90deg,#d9d3e8 0 4px,transparent 4px 7px)}
+.trilho b{position:relative;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-size:11px;font-weight:800;background:var(--card);border:2px solid #ddd6ee;color:#9b95b3;transition:transform .15s}
+.trilho .feita b{background:var(--roxo);border-color:var(--roxo);color:#fff}
+.trilho .atual b{background:var(--card);border-color:var(--roxo);color:var(--roxo);transform:scale(1.22);box-shadow:0 0 0 4px rgba(91,43,224,.16)}
+.trilho .livre b{border-color:var(--roxo);color:var(--roxo)}
+.app.escuro .trilho .livre b{border-color:#fff;color:#fff}
+.trilho .na b{background:#f3f1f8;border-color:#e4def3;color:#b9b3cc}
+.trilho button[aria-disabled]{cursor:not-allowed}
+.trilho button.feita:hover b{transform:scale(1.12)}
+.app.escuro .trilho button::before{background:rgba(255,255,255,.28)}
+.app.escuro .trilho button.feita::before,.app.escuro .trilho button.atual::before{background:#fff}
+.app.escuro .trilho b{background:rgba(255,255,255,.18);border-color:rgba(255,255,255,.5);color:#fff}
+.app.escuro .trilho .feita b{background:#fff;border-color:#fff;color:var(--roxo)}
+.app.escuro .trilho .atual b{background:var(--roxo);border-color:#fff;color:#fff;box-shadow:0 0 0 4px rgba(255,255,255,.28)}
+.app.escuro .trilho .na b{background:transparent;border-color:rgba(255,255,255,.35);color:rgba(255,255,255,.7)}
+.app.escuro .onde,.app.escuro .onde span{color:#fff}.app.escuro .onde span{opacity:.8}
+.onde{display:flex;justify-content:space-between;align-items:baseline;margin-top:6px;font-size:12.5px}
+.onde b{font-size:13.5px}.onde span{color:var(--muted)}
+.navega{display:flex;justify-content:space-between;align-items:center;gap:6px;margin-top:6px;font-size:12px}
+.navega button{border:0;background:none;padding:2px 0;color:var(--roxo);font-weight:800;font-size:12.5px;white-space:nowrap}
+.navega span{color:var(--muted);font-size:11px;text-align:center;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.app.escuro .navega button{color:#fff}.app.escuro .navega span{color:rgba(255,255,255,.75)}
+.recomeca{display:block;margin:14px auto 0;border:0;background:none;color:var(--muted);font-weight:700;font-size:13px}
+.corpo{flex:1;overflow-y:auto;padding:6px 20px 16px;scrollbar-width:thin}
+.rodape{padding:10px 20px 22px}
+.rodape:empty{display:none}
+.cabeca{flex:0 0 auto}
+.hero{background:var(--grad);color:#fff;margin:-6px -20px 18px;padding:14px 24px 26px;border-radius:0 0 30px 30px;position:relative;overflow:hidden}
+.hero::after{content:"";position:absolute;width:220px;height:220px;right:-70px;top:-40px;border-radius:50%;background:rgba(255,255,255,.1)}
+.hero.ambar{background:linear-gradient(140deg,#b45309,#e07b1a 60%,#ffb24a 140%)}
+.hero.neutro{background:linear-gradient(140deg,#3a3550,#5b5575)}
+.hero.ok{background:linear-gradient(140deg,#5b2be0,#7a45ee 55%,#16b67f 150%)}
+.hero .ola{font-weight:700;font-size:13.5px;opacity:.92;margin:0 0 8px}
+.hero h2{font-size:27px;line-height:1.14;margin:0 0 8px;letter-spacing:-.4px;position:relative}
+.hero p{margin:0;opacity:.94;font-size:14px;position:relative}
+.selo{display:inline-block;background:rgba(255,255,255,.2);border-radius:999px;padding:4px 11px;font:800 10.5px/1.2 var(--sans);letter-spacing:.08em;margin:0 0 12px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px;margin:0 0 12px;box-shadow:0 2px 10px rgba(40,20,90,.04)}
+.card.flutua{margin-top:-34px;position:relative;box-shadow:0 12px 30px rgba(59,23,150,.14)}
+.titulo{font-size:22px;font-weight:800;margin:6px 0 4px;letter-spacing:-.3px;line-height:1.2}
+.sub{color:var(--muted);font-size:13.5px;margin:0 0 14px}
+.rot{font-size:12px;color:var(--muted);font-weight:600}
+.grande{font-size:25px;font-weight:800;letter-spacing:-.5px;margin:2px 0 4px;font-variant-numeric:tabular-nums}
+.destaques{display:grid;gap:10px;margin:0 0 6px}
+.destaque{display:flex;gap:12px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:12px 14px}
+.destaque .ic{width:38px;height:38px;border-radius:12px;background:var(--roxo-soft);color:var(--roxo);display:grid;place-items:center;flex:0 0 auto}
+.destaque b{display:block;font-size:14px}.destaque span{font-size:12.5px;color:var(--muted)}
+label.campo{display:block;font-size:12px;color:var(--muted);font-weight:700;margin:0 0 12px}
+label.campo input{display:block;width:100%;margin-top:5px;padding:12px 13px;border:1.5px solid var(--line);border-radius:12px;background:var(--card);font-size:15px;outline:none;transition:border-color .15s}
+label.campo input:focus{border-color:var(--roxo);box-shadow:0 0 0 3px rgba(91,43,224,.12)}
+label.campo input[readonly]{background:#f6f4fb;color:#5d5775;border-color:#efebf7}
+label.campo.erro input{border-color:var(--bad)}
+label.campo small{display:block;color:var(--bad);font-weight:600;margin-top:4px}
+.dupla{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.primario{display:block;width:100%;border:0;border-radius:16px;background:var(--grad);color:#fff;font-weight:800;padding:15px;font-size:15.5px;box-shadow:0 10px 22px rgba(91,43,224,.3);transition:transform .1s,opacity .15s}
+.primario:active{transform:scale(.98)}
+.primario:disabled{opacity:.45;box-shadow:none;cursor:default}
+.secundario{display:block;width:100%;border:1.5px solid var(--roxo-linha);border-radius:16px;background:var(--card);color:var(--roxo);font-weight:800;padding:13px;font-size:15px;margin-top:8px}
+.texto{display:block;width:100%;border:0;background:none;color:var(--muted);font-weight:700;padding:12px;font-size:14px}
+.texto.perigo{color:var(--bad)}
+.link{border:0;background:none;color:var(--roxo);font-weight:700;padding:0;font-size:13.5px}
+.valor-in{display:flex;align-items:baseline;gap:6px;border-bottom:2px solid var(--roxo);padding:0 0 4px}
+.valor-in span{font-size:20px;font-weight:800;color:var(--muted)}
+.valor-in input{border:0;outline:0;background:none;font-size:32px;font-weight:800;letter-spacing:-.6px;width:100%;padding:0}
+input[type=range]{width:100%;accent-color:var(--roxo);margin:14px 0 2px}
+.limites{display:flex;justify-content:space-between;font-size:11.5px;color:var(--muted)}
+.prazos{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin:8px 0 4px}
+.prazos button{border:1.5px solid var(--line);background:var(--card);border-radius:13px;padding:9px 2px;font-weight:800;font-size:14px;line-height:1.15}
+.prazos button small{display:block;font-weight:600;font-size:10.5px;color:var(--muted);margin-top:2px}
+.prazos button.sel{background:var(--roxo);border-color:var(--roxo);color:#fff;box-shadow:0 6px 14px rgba(91,43,224,.25)}
+.prazos button.sel small{color:#e3d8ff}
+.prazos button:disabled{cursor:default}
+dl.linhas{display:grid;grid-template-columns:1fr auto;gap:7px 12px;margin:8px 0 0;font-size:13.5px}
+dl.linhas dt{color:var(--muted)}dl.linhas dd{margin:0;text-align:right;font-weight:700;font-variant-numeric:tabular-nums}
+dl.linhas .forte{color:var(--roxo)}
+.medidor{margin:12px 0 0;font-size:12.5px;border-radius:12px;padding:10px 12px;display:flex;gap:8px;align-items:flex-start}
+.medidor>div{flex:1}
+.medidor.bom{background:var(--ok-soft);color:#0b6b4a}.medidor.alto{background:var(--warn-soft);color:var(--warn)}
+.medidor i{font-style:normal;font-weight:800}
+.faixa{height:6px;border-radius:6px;background:rgba(0,0,0,.08);margin:7px 0 0;overflow:hidden}.faixa span{display:block;height:100%;border-radius:6px}
+.aviso{display:flex;gap:9px;align-items:flex-start;border-radius:14px;padding:11px 13px;font-size:13px;margin:0 0 12px}
+.aviso.info{background:var(--roxo-soft);color:var(--roxo-esc)}
+.aviso.warn{background:var(--warn-soft);color:var(--warn)}
+.aviso.bad{background:var(--bad-soft);color:var(--bad)}
+.aviso.ok{background:var(--ok-soft);color:#0b6b4a}
+.aviso svg{flex:0 0 auto;margin-top:1px}
+.check{display:flex;gap:11px;align-items:flex-start;font-size:13.5px;padding:12px 14px;border:1.5px solid var(--line);border-radius:14px;background:var(--card);margin:0 0 12px;cursor:pointer}
+.check input{width:20px;height:20px;accent-color:var(--roxo);margin:0;flex:0 0 auto}
+.check.marcado{border-color:var(--roxo);background:var(--roxo-soft)}
+.icone-topo{width:54px;height:54px;border-radius:18px;display:grid;place-items:center;background:var(--roxo-soft);color:var(--roxo);margin:10px 0 14px}
+.icone-topo.cheio{background:var(--grad);color:#fff;box-shadow:0 10px 24px rgba(91,43,224,.3)}
+.passos{list-style:none;margin:0;padding:0}
+.passos li{display:flex;gap:12px;align-items:center;padding:12px 2px;border-bottom:1px solid var(--line);font-size:14px;color:var(--muted)}
+.passos li:last-child{border-bottom:0}
+.passos li::before{content:"";width:20px;height:20px;border-radius:50%;border:2px solid #d4cde6;flex:0 0 auto;box-sizing:border-box}
+.passos li.feito{color:var(--text)}
+.passos li.feito::before{border-color:var(--roxo);background:var(--roxo) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M4 8.5l2.5 2.5L12 5.5' fill='none' stroke='white' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/13px no-repeat}
+.passos li.agora{color:var(--text);font-weight:700}
+.passos li.agora::before{border-color:var(--roxo);border-right-color:transparent;animation:gira .9s linear infinite}
+.passos li.espera{color:var(--warn)}.passos li.espera::before{border-color:var(--warn);border-style:dashed;animation:gira 3s linear infinite}
+.passos li.sem::before{display:none}
+@keyframes gira{to{transform:rotate(360deg)}}
+.vivo{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:800;color:var(--ok)}
+.vivo::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--ok);animation:pulsa 1.2s infinite}
+@keyframes pulsa{50%{opacity:.25}}
+.parcela{display:flex;justify-content:space-between;gap:10px;padding:11px 0;border-bottom:1px solid var(--line);font-size:13.5px}
+.parcela:last-child{border-bottom:0}.parcela span{display:block;color:var(--muted);font-size:12px}
+.notif{position:relative;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:13px 14px 13px 34px;margin:0 0 10px;font-size:13.5px}
+.notif::before{content:"";position:absolute;left:15px;top:19px;width:8px;height:8px;border-radius:50%;background:var(--coral)}
+.notif b{display:block;font-size:14px;margin:0 0 3px}.notif time{display:block;font-size:11.5px;color:var(--muted);margin-top:6px}
+.tempo{list-style:none;margin:10px 0 0 6px;padding:0 0 0 14px;border-left:2px solid var(--roxo-linha)}
+.tempo li{position:relative;padding:0 0 12px 12px;font-size:13px}
+.tempo li::before{content:"";position:absolute;left:-21px;top:4px;width:10px;height:10px;border-radius:50%;background:var(--roxo)}
+.tempo span{display:block;color:var(--muted);font-size:12px}
+details.mais summary{list-style:none;cursor:pointer;color:var(--roxo);font-weight:800;font-size:13.5px;padding:2px 0}
+details.mais summary::-webkit-details-marker{display:none}
+details.mais summary::after{content:" ›"}
+details.mais[open] summary::after{content:" ‹"}
+.tag{display:inline-block;font:800 10.5px/1 var(--sans);letter-spacing:.04em;padding:5px 9px;border-radius:999px;background:var(--roxo-soft);color:var(--roxo);white-space:nowrap}
+.tag.ok{background:var(--ok-soft);color:var(--ok)}.tag.bad{background:var(--bad-soft);color:var(--bad)}.tag.warn{background:var(--warn-soft);color:var(--warn)}.tag.cinza{background:#efedf5;color:var(--muted)}
+.pedido{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid var(--line);font-size:13.5px}
+.pedido:last-child{border-bottom:0}.pedido span{display:block;color:var(--muted);font-size:12px}
+.continuar{display:flex;gap:12px;align-items:center;border:0;width:100%;text-align:left;background:var(--card);border-radius:18px;padding:14px 16px;box-shadow:0 12px 30px rgba(59,23,150,.14);margin:-34px 0 14px;position:relative}
+.continuar .ic{width:42px;height:42px;border-radius:14px;background:var(--grad);color:#fff;display:grid;place-items:center;flex:0 0 auto}
+.continuar b{display:block;font-size:14.5px}.continuar span{font-size:12.5px;color:var(--muted)}
+.continuar em{margin-left:auto;font-style:normal;color:var(--roxo);font-size:22px;font-weight:800}
+.contas{display:grid;gap:8px;margin-top:8px}
+.contas button{display:flex;align-items:center;gap:11px;text-align:left;border:1.5px solid var(--line);background:var(--card);border-radius:14px;padding:10px 12px}
+.contas button i{width:32px;height:32px;border-radius:50%;background:var(--roxo-soft);color:var(--roxo);display:grid;place-items:center;font-style:normal;font-weight:800;font-size:12.5px;flex:0 0 auto}
+.contas button b{display:block;font-size:13.5px}.contas button span{font-size:12px;color:var(--muted)}
+.contas button.sel{border-color:var(--roxo);background:var(--roxo-soft)}
+.cartoes{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:0 0 12px}
+.cartoes .card{margin:0}
+.veu{position:absolute;inset:0;background:rgba(23,17,43,.42);display:flex;align-items:flex-end;opacity:0;pointer-events:none;transition:opacity .2s;z-index:5}
+.veu.aberto{opacity:1;pointer-events:auto}
+.folha{background:var(--card);width:100%;border-radius:26px 26px 0 0;padding:10px 20px 26px;transform:translateY(30px);transition:transform .2s}
+.veu.aberto .folha{transform:none}
+.folha::before{content:"";display:block;width:40px;height:4px;border-radius:4px;background:#ddd6ee;margin:0 auto 14px}
+.folha h3{margin:0 0 6px;font-size:18px}.folha p{margin:0 0 14px;color:var(--muted);font-size:14px}
+.menu button{display:flex;gap:12px;align-items:center;width:100%;border:0;background:none;padding:13px 4px;font-size:15px;font-weight:600;border-bottom:1px solid var(--line);text-align:left}
+.menu button:last-child{border-bottom:0}
+.toast{position:absolute;left:16px;right:16px;bottom:100px;background:#231b3f;color:#fff;border-radius:14px;padding:12px 14px;font-size:13.5px;box-shadow:0 12px 30px rgba(0,0,0,.25);opacity:0;transform:translateY(10px);transition:all .2s;pointer-events:none;z-index:6}
+.toast.ver{opacity:1;transform:none}
+.carregando{color:var(--muted);font-size:13.5px;padding:8px 0}
+/* recursos opcionais */
+.app.tema-escuro .ajuda-bt,.app.tema-escuro .avatar{background:#3d3170;color:#fff}
+.app.tema-escuro .voltar{color:#fff}
+.app.tema-escuro .navega button{color:#cbbfff}
+.app.tema-escuro{--roxo:#8f74ff;--bg:#130f20;--card:#1d1731;--text:#ece8f8;--muted:#a69ec2;--line:#2d2645;--roxo-soft:#2a2150;--roxo-linha:#3d3170;--roxo-esc:#d6ccff;
+  --ok:#41d49c;--ok-soft:#123528;--warn:#f2b45a;--warn-soft:#382912;--bad:#ff8b82;--bad-soft:#3b1a1a}
+.app.tema-escuro .aviso.ok,.app.tema-escuro .medidor.bom{color:#7fe3bd}
+.app.tema-escuro label.campo input[readonly]{background:#18132a;color:var(--muted);border-color:var(--line)}
+.app.tema-escuro .trilho button::before{background:#342c50}
+.app.tema-escuro .tag.cinza{background:#2a2540}
+.app.texto-grande .corpo,.app.texto-grande .rodape{zoom:1.12}
+.ajuda-bt{height:34px;border-radius:999px;border:0;background:var(--roxo-soft);color:var(--roxo);font-weight:800;font-size:13px;padding:0 12px 0 9px;display:inline-flex;align-items:center;gap:5px}
+.app.escuro .ajuda-bt{background:rgba(255,255,255,.2);color:#fff}
+.ajuda-bt[hidden]{display:none}
+.casos{display:grid;gap:8px;margin:4px 0 12px}
+.casos button{display:flex;align-items:center;gap:12px;text-align:left;border:1.5px solid var(--line);background:var(--card);border-radius:16px;padding:12px 14px}
+.casos button i{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;font-style:normal;font-weight:800;font-size:13px;flex:0 0 auto}
+.casos button b{display:block;font-size:14px}.casos button span{font-size:12.5px;color:var(--muted)}
+.casos button em{margin-left:auto;font-style:normal;color:var(--roxo);font-size:20px;font-weight:800}
+.casos .c-ok i{background:var(--ok-soft);color:var(--ok)}.casos .c-warn i{background:var(--warn-soft);color:var(--warn)}.casos .c-bad i{background:var(--roxo-soft);color:var(--roxo)}
+.pre{display:block;width:100%;text-align:left;border:0;border-radius:18px;padding:16px;margin:-34px 0 14px;position:relative;color:#fff;
+  background:linear-gradient(135deg,#1f1446,#3b1796 70%,#5b2be0);box-shadow:0 12px 30px rgba(59,23,150,.22)}
+.pre small{display:block;font-weight:800;font-size:11px;letter-spacing:.08em;opacity:.8}
+.pre b{display:block;font-size:26px;letter-spacing:-.5px;margin:2px 0}
+.pre span{font-size:13px;opacity:.9}
+.pre u{display:inline-block;margin-top:10px;text-decoration:none;background:#fff;color:#3b1796;border-radius:999px;padding:7px 14px;font-weight:800;font-size:13px}
+.chips{display:flex;flex-wrap:wrap;gap:7px;margin:8px 0 4px}
+.chips button{border:1.5px solid var(--line);background:var(--card);border-radius:999px;padding:8px 13px;font-weight:700;font-size:13px}
+.chips button.sel{background:var(--roxo);border-color:var(--roxo);color:#fff}
+.chips button:disabled{cursor:default}
+.selo-of{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:800;color:var(--ok);margin-top:-6px;margin-bottom:12px}
+.opcoes{display:grid;gap:8px}
+.opcao{display:flex;gap:12px;align-items:center;width:100%;text-align:left;border:1.5px solid var(--line);background:var(--card);border-radius:16px;padding:12px 14px}
+.opcao .ic{width:38px;height:38px;border-radius:12px;background:var(--roxo-soft);color:var(--roxo);display:grid;place-items:center;flex:0 0 auto}
+.opcao b{display:block;font-size:14px}.opcao span{font-size:12.5px;color:var(--muted)}
+.opcao em{margin-left:auto;font-style:normal;color:var(--roxo);font-size:20px;font-weight:800}
+.menu .sec{font-size:11.5px;font-weight:800;letter-spacing:.06em;color:var(--muted);margin:14px 0 2px;text-transform:uppercase}
+@media (max-width:520px){
+  .palco{padding:0;display:block}
+  .aparelho{width:100%;border-radius:0;padding:0;background:none;box-shadow:none}
+  /* no celular o app ocupa a tela visível e a página nunca rola: topo e etapas ficam sempre à vista,
+     mesmo em visualizadores que calculam a altura da tela de outro jeito */
+  html,body{overflow:hidden;height:100%}
+  .app{position:fixed;top:0;left:0;right:0;bottom:0;height:auto;border-radius:0}
+  .cabeca{flex:0 0 auto}
+  .barra-sis{display:none}
+  /* app instalado em tela cheia: respeita o entalhe e a barra de gestos do celular */
+  .cabeca{padding-top:env(safe-area-inset-top)}
+  .app{padding-bottom:env(safe-area-inset-bottom)}
+}
+</style>
+</head>
+<body>
+<div class="palco"><div class="aparelho"><div class="app" id="app">
+  <div class="cabeca" id="cabeca">
+  <div class="barra-sis"><span id="hora">9:41</span><span>5G ▮▮▮ 92%</span></div>
+  <div class="topo">
+    <button class="voltar oculto" id="voltar" aria-label="Voltar"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
+    <div class="marca"><i>E</i><span>Empréstimo Pessoal</span></div>
+    <button class="ajuda-bt" id="ajuda" aria-label="Ajuda" hidden><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8.5 8.5 0 0 1-12.4 7.6L4 21l1.4-4.6A8.5 8.5 0 1 1 21 12z"/><path d="M9.8 9.6a2.3 2.3 0 0 1 4.4.9c0 1.6-2.2 2-2.2 3.3M12 16.6v.1"/></svg>Ajuda</button>
+    <button class="avatar" id="avatar" aria-label="Menu">☰</button>
+  </div>
+  <nav class="etapas oculto" id="etapas" aria-label="Etapas do pedido">
+    <div class="trilho" id="trilho"></div>
+    <div class="onde"><b id="onde-nome"></b><span id="onde-prox"></span></div>
+    <div class="navega"><button id="etapa-ant">‹ Etapa anterior</button><span>toque nos números para voltar</span><button id="recomecar">↺ Recomeçar</button></div>
+  </nav>
+  </div>
+  <main class="corpo" id="corpo"></main>
+  <div class="rodape" id="rodape"></div>
+  <div class="toast" id="toast" role="status"></div>
+  <div class="veu" id="veu"><div class="folha" id="folha"></div></div>
+</div></div></div>
+
+<script>
+// demonstração: o painel de recursos pode ser ajustado no menu (fica neste aparelho)
+try { window.DEMO_RECURSOS = JSON.parse(sessionStorage.getItem("v2-recursos") || "null") || undefined; } catch {}
+// a jornada fica guardada só enquanto o app está aberto: fechar e abrir de novo começa do zero
+window.DEMO_OPCOES = { clientesPrecadastrados: false, persistir: true, sessao: true, chave: "demo-estado-v2", tempoAnalise: 2600, tempoContrato: 1800 };
+/*
+ * API SIMULADA para a demonstração offline (sem servidor, sem internet).
+ * Reproduz, dentro do navegador, as mesmas regras e contas dos serviços Java:
+ * Tabela Price, IOF/CET, política de crédito (faixas A/B/C, limite, 30% da renda, contraproposta),
+ * bureau pelo CPF (score = 7º–9º dígitos; CPF começando com 0 = restrição), aceite → contrato,
+ * quitação antecipada, status ao vivo e painel da operação.
+ * Os números dos 6 cenários do desafio batem com os da API real. É uma vitrine: não substitui os serviços.
+ */
+(function () {
+  "use strict";
+  if (!window.crypto) window.crypto = {};
+  if (!crypto.randomUUID) crypto.randomUUID = () => "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
+    const r = Math.random() * 16 | 0; return (c === "x" ? r : (r & 3 | 8)).toString(16); });
+
+  // ---------- parâmetros (os mesmos do application.yml) ----------
+  const PRODUTO = { valorMinimo: 1000, valorMaximo: 100000, prazoMinimo: 6, prazoMaximo: 48,
+    taxas: [[12, 1.99], [24, 2.49], [36, 2.99], [48, 3.49]], iofDiaria: 0.0082, iofAdicional: 0.38, diasMaximos: 365, validadeDias: 7 };
+  const POLITICA = { faixas: [["A", 700, 999, -0.5, 10], ["B", 500, 699, 0, 5], ["C", 300, 499, 1, 2]],
+    teto: 100000, comprometimento: 0.30, valorMinimo: 1000, multiplo: 100 };
+  const COMO_MELHORAR = {
+    RESTRICAO_CADASTRAL: ["Consulte seu CPF nos birôs de crédito e regularize as pendências.", "Depois da regularização, a atualização pode levar alguns dias; então faça uma nova simulação."],
+    SCORE_INSUFICIENTE: ["Pague as contas em dia: é o que mais pesa no score.", "Ative o Cadastro Positivo e mantenha seus dados atualizados nos birôs.", "Evite pedir crédito em vários lugares ao mesmo tempo; tente de novo em alguns meses."],
+    CAPACIDADE_PAGAMENTO: ["Simule um valor menor ou um prazo maior: a parcela precisa caber em 30% da sua renda.", "Se sua renda aumentou, atualize o cadastro antes de simular de novo."] };
+  // painel de recursos (o mesmo bloco "recursos" do application.yml): cada banco liga, desliga ou ajusta
+  const RECURSOS = Object.assign({
+    preAprovado: { ativo: true, prazoReferencia: 24, comprometimentoMaximo: 0.30 },
+    finalidade: { ativo: true, opcoes: ["Reforma da casa", "Quitar dívidas", "Saúde", "Educação", "Viagem", "Veículo", "Negócio próprio", "Outros"], ajusteTaxa: {} },
+    vencimento: { ativo: true, dias: [5, 10, 15, 20, 25], carencias: [30, 60, 90], incorporarJurosCarencia: true },
+    confirmacaoForte: { ativo: false, metodosAceitos: ["biometria-do-aparelho", "biometria-simulada", "senha"] },
+    app: { biometria: true, "prova-de-vida": true, "open-finance": true, pix: true, antecipacao: true, lembretes: true, ajuda: true, "tema-escuro": true, ofertas: true }
+  });
+  // a página pode ajustar o painel (ex.: ligar/desligar recursos na demonstração), item a item
+  for (const [k, v] of Object.entries(window.DEMO_RECURSOS || {})) RECURSOS[k] = v && typeof v === "object" && !Array.isArray(v) ? Object.assign({}, RECURSOS[k], v) : v;
+  // opções da página (a versão 2 usa: clientes sem cadastro prévio e estado só na memória)
+  const OP = Object.assign({ clientesPrecadastrados: true, persistir: true, tempoAnalise: 1800, tempoContrato: 1500, chave: "demo-estado" }, window.DEMO_OPCOES || {});
+  const TEMPO_ANALISE = OP.tempoAnalise, TEMPO_CONTRATO = OP.tempoContrato;
+  // "bastidores": a página pode ouvir o que aconteceria entre os serviços (eventos, chamadas internas)
+  const bast = (tipo, titulo, detalhe) => { try { window.aoBastidor && window.aoBastidor({ tipo, titulo, detalhe, em: new Date() }); } catch {} };
+  const reais = (v) => Number(v).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+
+  // ---------- contas (em centavos inteiros, arredondamento meio para cima) ----------
+  const s2 = (centavos) => (centavos / 100).toFixed(2);
+  const taxaRef = (prazo) => PRODUTO.taxas.find(([ate]) => prazo <= ate)[1];
+  function parcelaC(valorC, taxa, prazo) {
+    const i = taxa / 100, f = Math.pow(1 + i, prazo);
+    return Math.round(valorC * i * f / (f - 1));
+  }
+  function cronograma(valorC, taxa, prazo) {
+    const i = taxa / 100, p = parcelaC(valorC, taxa, prazo), lista = [];
+    let saldo = valorC;
+    for (let n = 1; n <= prazo; n++) {
+      const juros = Math.round(saldo * i), amort = n === prazo ? saldo : p - juros;
+      saldo -= amort;
+      lista.push({ numero: n, dias: 30 * n, valorC: amort + juros, jurosC: juros, amortC: amort, saldoC: saldo });
+    }
+    return lista;
+  }
+  // extra = dias de carência além dos 30 cujos juros entram no saldo (1ª parcela em 60/90 dias), como CondicoesFinais
+  const saldoCarencia = (valorC, taxa, extra) => extra > 0 ? Math.round(valorC * Math.pow(1 + taxa / 100, extra / 30)) : valorC;
+  function custos(valorC, taxa, prazo, extra = 0) {
+    const crono = cronograma(valorC, taxa, prazo), pagas = extra > 0 ? cronograma(saldoCarencia(valorC, taxa, extra), taxa, prazo) : crono;
+    let iof = valorC * PRODUTO.iofAdicional / 100;
+    for (const p of crono) iof += p.amortC * PRODUTO.iofDiaria / 100 * Math.min(p.dias, PRODUTO.diasMaximos);
+    const iofC = Math.round(iof), liberadoC = valorC - iofC;
+    let baixo = 0, alto = 1;
+    for (let k = 0; k < 200; k++) {
+      const meio = (baixo + alto) / 2; let vp = 0;
+      for (const p of pagas) vp += p.valorC / Math.pow(1 + meio, p.numero + extra / 30);
+      if (vp > liberadoC) baixo = meio; else alto = meio;
+    }
+    const r = (baixo + alto) / 2;
+    return { crono: pagas, iofC, liberadoC, cetMensal: (r * 100).toFixed(2), cetAnual: ((Math.pow(1 + r, 12) - 1) * 100).toFixed(2) };
+  }
+  const anual = (taxa) => ((Math.pow(1 + taxa / 100, 12) - 1) * 100).toFixed(2);
+  function condicoes(valorC, taxa, prazo, extra = 0) {
+    const c = custos(valorC, taxa, prazo, extra), p = parcelaC(saldoCarencia(valorC, taxa, extra), taxa, prazo);
+    return { valor: s2(valorC), prazo, taxaMensal: taxa.toFixed(2), taxaAnual: anual(taxa), parcela: s2(p),
+      totalPagar: s2(c.crono.reduce((t, x) => t + x.valorC, 0)), iof: s2(c.iofC), valorLiberado: s2(c.liberadoC),
+      cetMensal: c.cetMensal, cetAnual: c.cetAnual, _crono: c.crono };
+  }
+  function avaliar(cpf, rendaC, valorC, prazo, ajusteFinalidade = 0) {
+    const score = Number(cpf.slice(6, 9));
+    if (cpf[0] === "0") return { decisao: "REPROVADA", motivo: "RESTRICAO_CADASTRAL", score };
+    const faixa = POLITICA.faixas.find(([, min, max]) => score >= min && score <= max);
+    if (!faixa) return { decisao: "REPROVADA", motivo: "SCORE_INSUFICIENTE", score };
+    const [nome, , , ajuste, mult] = faixa;
+    const taxa = Math.round((taxaRef(prazo) + ajusteFinalidade + ajuste) * 100) / 100;
+    const limiteC = Math.min(rendaC * mult, POLITICA.teto * 100), parcelaMaxC = rendaC * POLITICA.comprometimento;
+    if (valorC <= limiteC && parcelaC(valorC, taxa, prazo) <= parcelaMaxC) return { decisao: "APROVADA", faixa: nome, taxa, valorC, score };
+    const i = taxa / 100, vpMax = parcelaMaxC * (1 - 1 / Math.pow(1 + i, prazo)) / i;
+    let cand = Math.floor(Math.min(valorC, limiteC, vpMax) / (POLITICA.multiplo * 100)) * POLITICA.multiplo * 100;
+    while (cand >= POLITICA.valorMinimo * 100 && parcelaC(cand, taxa, prazo) > parcelaMaxC) cand -= POLITICA.multiplo * 100;
+    if (cand < POLITICA.valorMinimo * 100) return { decisao: "REPROVADA", motivo: "CAPACIDADE_PAGAMENTO", faixa: nome, score };
+    return { decisao: "CONTRAPROPOSTA", faixa: nome, taxa, valorC: cand, score };
+  }
+
+  // ---------- estado (fica guardado neste aparelho; "Reiniciar demonstração" apaga) ----------
+  const CLIENTES_INICIAIS = [
+    ["12345685000", "Ana Souza", 10000], ["74185276087", "Bruno Lima", 6000], ["45678960091", "Carla Dias", 2500],
+    ["98765440048", "Diego Rocha", 3000], ["32165415098", "Elisa Prado", 4000], ["01234572036", "Fábio Melo", 8000]];
+  function estadoInicial() {
+    const e = { clientes: {}, simulacoes: {}, propostas: {}, contratos: {}, auditoria: [], notificacoes: [], seq: 1,
+      dlq: [{ correlationId: "demo-bureau-fora", erro: "Bureau indisponível (tempo esgotado)", recuperavel: true, devolucoesAutomaticas: 2 }] };
+    for (const [cpf, nome, renda] of OP.clientesPrecadastrados ? CLIENTES_INICIAIS : []) {
+      const id = "cli-" + cpf;
+      e.clientes[id] = { id, nome, cpf, dataNascimento: "1988-03-12", email: nome.split(" ")[0].toLowerCase() + "@exemplo.com.br",
+        telefone: "(11) 98888-7777", renda: renda.toFixed(2), criadoEm: new Date().toISOString() };
+    }
+    return e;
+  }
+  let E;
+  // guarda no aparelho (localStorage) ou só enquanto a página está aberta (sessionStorage, "sessao: true")
+  const ARM = (() => { try { return OP.sessao ? sessionStorage : localStorage; } catch { return null; } })();
+  try { E = (OP.persistir && ARM && JSON.parse(ARM.getItem(OP.chave))) || estadoInicial(); } catch { E = estadoInicial(); }
+  E.notificacoes = E.notificacoes || [];
+  const salvar = () => { if (OP.persistir) try { ARM.setItem(OP.chave, JSON.stringify(E)); } catch {} };
+  window.zerarDemonstracao = () => { E = estadoInicial(); salvar(); };
+  function notificar(p, tipo, titulo, mensagem) {
+    E.notificacoes.push({ id: novoId("not"), propostaId: p.id, clienteId: p.clienteId, canal: "APP", tipo, titulo, mensagem, eventId: crypto.randomUUID(), criadaEm: new Date().toISOString() });
+    salvar();
+    bast("INTERNO", "Notificações grava o aviso ao cliente", `"${titulo}" (a partir do evento ${tipo})`);
+  }
+  window.reiniciarDemonstracao = () => { try { ARM.removeItem(OP.chave); localStorage.removeItem("tema"); sessionStorage.clear(); } catch {} location.reload(); };
+  const novoId = (p) => p + "-" + Date.now().toString(36) + (E.seq++).toString(36);
+
+  // ---------- respostas ----------
+  const ouvintes = {};   // status ao vivo: propostaId -> [função]
+  const json = (status, corpo) => new Response(JSON.stringify(corpo), { status, headers: { "Content-Type": "application/json" } });
+  const problema = (status, codigo, title, acao) => new Response(JSON.stringify({ type: "/problemas#" + codigo, title, status, codigo, acao }),
+    { status, headers: { "Content-Type": "application/problem+json" } });
+  const EM_ANDAMENTO = ["EM_ANALISE", "APROVADA", "CONTRAPROPOSTA", "ACEITA"];
+  const FINAIS = ["REPROVADA", "CANCELADA", "RECUSADA", "EXPIRADA", "CONTRATADA"];
+
+  function acoes(p) {
+    const b = "/propostas/" + p.id;
+    switch (p.status) {
+      case "EM_ANALISE": return [{ nome: "cancelar", metodo: "POST", href: b + "/cancelamento" }, { nome: "acompanhar", metodo: "GET", href: b + "/acompanhamento" }];
+      case "APROVADA": case "CONTRAPROPOSTA": return [{ nome: "aceitar", metodo: "POST", href: b + "/aceite" }, { nome: "recusar", metodo: "POST", href: b + "/recusa" }];
+      case "ACEITA": return [{ nome: "acompanhar", metodo: "GET", href: b + "/acompanhamento" }];
+      case "CONTRATADA": return [{ nome: "ver-contrato", metodo: "GET", href: "/contratos/" + p.contratoId }, { nome: "simular-quitacao", metodo: "GET", href: "/contratos/" + p.contratoId + "/quitacao" }];
+      default: return [{ nome: "nova-simulacao", metodo: "POST", href: "/simulacoes" }];
+    }
+  }
+  const vistaProposta = (p) => { const { analise, ...v } = p; return { ...v, acoesDisponiveis: acoes(p) }; };
+  function mudar(p, status, observacao) {
+    p.status = status; p.atualizadaEm = new Date().toISOString();
+    p.historicoStatus.push({ status, em: p.atualizadaEm, observacao });
+    salvar();
+    (ouvintes[p.id] || []).forEach((f) => f(p));
+  }
+  function analisar(id) {
+    const p = E.propostas[id]; if (!p || p.status !== "EM_ANALISE") return;
+    if (window.__bureauFora) { bureauFalhou(p); return; }
+    const c = E.clientes[p.clienteId], r = avaliar(c.cpf, Math.round(Number(c.renda) * 100), Math.round(Number(p.valorSolicitado) * 100), p.prazo,
+      Number((RECURSOS.finalidade.ajusteTaxa || {})[p.finalidade] || 0));
+    bast("EVENTO", "Análise de Crédito consome proposta.solicitada", "fila analise.proposta-solicitada (com retry e DLQ)");
+    bast("REST", "GET /bureau/score/{cpf} → 200", `Análise → Bureau: score ${r.score}${c.cpf[0] === "0" ? ", com restrição" : ", sem restrição"} (timeout 2,5 s, retry, circuit breaker)`);
+    bast("INTERNO", "Política de crédito aplicada", r.decisao === "REPROVADA" ? `reprovada: ${r.motivo}` :
+      `faixa ${r.faixa}, taxa ${r.taxa.toFixed(2)}% a.m., parcela até 30% da renda → ${r.decisao.toLowerCase()} de ${reais(r.valorC / 100)}`);
+    p.analise = { ...r, comoMelhorar: r.motivo ? COMO_MELHORAR[r.motivo] : [] };
+    if (r.decisao === "REPROVADA") {
+      p.motivo = r.motivo;
+      bast("EVENTO", "analise.concluida publicado", "decisão REPROVADA → Propostas e Notificações");
+      mudar(p, "REPROVADA", "análise concluída: " + r.motivo);
+      bast("INTERNO", "Propostas atualiza o status", "EM_ANALISE → REPROVADA (transição validada pela máquina de estados)");
+      notificar(p, "analise.concluida", "Proposta não aprovada", "Infelizmente não foi possível aprovar sua proposta neste momento. Você pode tentar novamente no futuro.");
+      return;
+    }
+    const cf = condicoes(r.valorC, r.taxa, p.prazo, extraCarencia(p)); delete cf._crono;
+    p.condicoesFinais = cf; p.decididaEm = new Date().toISOString();
+    p.prazoDecisao = new Date(Date.now() + 48 * 3600e3).toISOString();
+    bast("EVENTO", "analise.concluida publicado", `decisão ${r.decisao} → Propostas e Notificações`);
+    mudar(p, r.decisao, "análise concluída");
+    bast("INTERNO", "Propostas atualiza o status", `EM_ANALISE → ${r.decisao}; oferta vale 48 h`);
+    notificar(p, "analise.concluida", r.decisao === "APROVADA" ? "Proposta aprovada!" : "Temos uma contraproposta",
+      r.decisao === "APROVADA"
+        ? `Boa notícia! Aprovamos ${reais(cf.valor)} em ${cf.prazo} parcelas de ${reais(cf.parcela)} (taxa de ${cf.taxaMensal.replace(".", ",")}% a.m.). Você tem 48 horas para aceitar no app.`
+        : `Não conseguimos aprovar o valor pedido, mas podemos oferecer ${reais(cf.valor)} em ${cf.prazo} parcelas de ${reais(cf.parcela)} (taxa de ${cf.taxaMensal.replace(".", ",")}% a.m.). Você tem 48 horas para aceitar ou recusar.`);
+  }
+  // queda do bureau: retentativas → circuit breaker → reprocessamentos → DLQ → devolução automática quando volta
+  const naDlq = new Set();
+  function bureauFalhou(p) {
+    bast("EVENTO", "Análise de Crédito consome proposta.solicitada", "fila analise.proposta-solicitada");
+    [1, 2, 3].forEach((n) => setTimeout(() => bast("FALHA", `GET /bureau/score/{cpf} → 503 (tentativa ${n} de 3)`,
+      n < 3 ? `espera ${n * 0.5} s e tenta de novo (backoff exponencial)` : "circuit breaker abre: para de insistir por 20 s"), n * 450));
+    setTimeout(() => bast("EVENTO", "Mensagem vai para a fila .retry", "volta a cada 10 s, até 3 reprocessamentos; a proposta segue EM_ANALISE, nada se perde"), 1500);
+    setTimeout(() => {
+      // o bureau voltou antes de a mensagem esgotar as tentativas: o reprocessamento da fila .retry já resolve
+      if (!window.__bureauFora) { bast("EVENTO", "Reprocessamento da fila .retry", "o bureau respondeu de novo; a análise continua sem ir para a DLQ"); analisar(p.id); return; }
+      naDlq.add(p.id); bast("FALHA", "Mensagem parada na DLQ (fila de não entregues)", "marcada como recuperável; alerta para a operação; devolução automática a cada 5 min"); }, 2300);
+  }
+  window.bureauFora = (fora) => {
+    window.__bureauFora = !!fora;
+    bast("INTERNO", fora ? "Bureau fora do ar (simulado)" : "Bureau de volta", fora ? "as próximas análises vão falhar de propósito" : naDlq.size ? `devolução automática da DLQ: ${naDlq.size} mensagem(ns) voltam para a fila` : "nenhuma mensagem parada");
+    if (!fora) for (const id of [...naDlq]) {
+      naDlq.delete(id);
+      E.auditoria.unshift({ quando: new Date().toISOString(), acao: "devolucao-automatica", fila: "analise.proposta-solicitada.dlq", quem: "sistema", quantidade: 1, motivo: "bureau voltou" }); salvar();
+      setTimeout(() => analisar(id), 900);
+    }
+  };
+  const extraCarencia = (p) => p.carenciaDias > 30 && RECURSOS.vencimento.incorporarJurosCarencia !== false ? p.carenciaDias - 30 : 0;
+  function contratar(id) {
+    const p = E.propostas[id]; if (!p || p.status !== "ACEITA") return;
+    const cf = p.condicoesFinais, valorC = Math.round(Number(cf.valor) * 100);
+    const crono = cronograma(saldoCarencia(valorC, Number(cf.taxaMensal), extraCarencia(p)), Number(cf.taxaMensal), cf.prazo);
+    const hoje = new Date(); hoje.setHours(12, 0, 0, 0);
+    // 1ª parcela em 30 dias (ou na carência escolhida); com dia escolhido, o primeiro desse dia a partir daí (como CronogramaPrice)
+    const base = new Date(hoje); base.setDate(base.getDate() + Math.max(30, p.carenciaDias || 30));
+    let primeira = new Date(base);
+    if (p.diaVencimento) { primeira.setDate(p.diaVencimento); if (primeira < base) primeira.setMonth(primeira.getMonth() + 1); }
+    const venc = (n) => {   // mesmo dia nos meses seguintes; em meses mais curtos, o último dia (como plusMonths)
+      const d = new Date(primeira.getFullYear(), primeira.getMonth() + n - 1, 1, 12);
+      d.setDate(Math.min(primeira.getDate(), new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate()));
+      return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); };
+    const cid = novoId("ctr"), numero = "CTR-" + hoje.getFullYear() + "-" + String(Object.keys(E.contratos).length + 1).padStart(6, "0");
+    E.contratos[cid] = { id: cid, numero, propostaId: p.id, valor: cf.valor, prazo: cf.prazo, taxaMensal: cf.taxaMensal, valorParcela: cf.parcela,
+      iof: cf.iof, valorLiberado: cf.valorLiberado, cetMensal: cf.cetMensal, cetAnual: cf.cetAnual, dataContratacao: hoje.toISOString().slice(0, 10),
+      taxaAnual: cf.taxaAnual, clienteId: p.clienteId, contratadoEm: new Date().toISOString(),
+      totalJuros: s2(crono.reduce((t, x) => t + x.valorC, 0) - valorC), diaVencimento: p.diaVencimento || null, carenciaDias: Math.max(30, p.carenciaDias || 30),
+      totalPagar: s2(crono.reduce((t, x) => t + x.valorC, 0)), primeiroVencimento: venc(1), ultimoVencimento: venc(cf.prazo),
+      parcelas: crono.map((x) => ({ numero: x.numero, vencimento: venc(x.numero), valor: s2(x.valorC), juros: s2(x.jurosC), amortizacao: s2(x.amortC), saldoDevedor: s2(x.saldoC) })) };
+    bast("EVENTO", "Contratos consome proposta.aceita", "fila contratos.proposta-aceita");
+    bast("INTERNO", "Contrato gerado", `${numero}: cronograma Price com ${cf.prazo} parcelas (centavos ajustados na última)`);
+    bast("EVENTO", "contrato.efetivado publicado", "→ Propostas e Notificações");
+    p.contratoId = cid; p.numeroContrato = numero;
+    mudar(p, "CONTRATADA", "contrato " + numero + " efetivado");
+    bast("INTERNO", "Propostas atualiza o status", "ACEITA → CONTRATADA");
+    notificar(p, "contrato.efetivado", "Contrato efetivado", `Seu contrato ${numero} foi efetivado: ${reais(cf.valor)} em ${cf.prazo} parcelas. A primeira vence em ${new Date(venc(1) + "T12:00:00").toLocaleDateString("pt-BR")}; confira o cronograma no app.`);
+  }
+  // retoma o que estava em andamento quando a página foi fechada
+  for (const p of Object.values(E.propostas)) {
+    if (p.status === "EM_ANALISE") setTimeout(() => analisar(p.id), TEMPO_ANALISE);
+    if (p.status === "ACEITA") setTimeout(() => contratar(p.id), TEMPO_CONTRATO);
+  }
+  function quitacao(c, dataTxt) {
+    const data = new Date(dataTxt + "T12:00:00"), fator = 1 + Number(c.taxaMensal) / 100;
+    let nominal = 0, presente = 0, abertas = 0;
+    for (const p of c.parcelas) {
+      const v = new Date(p.vencimento + "T12:00:00"); if (v < data) continue;
+      abertas++; nominal += Number(p.valor);
+      let meses = (v.getFullYear() - data.getFullYear()) * 12 + v.getMonth() - data.getMonth();
+      let base = new Date(data); base.setMonth(base.getMonth() + meses);
+      if (base > v) { meses--; base = new Date(data); base.setMonth(base.getMonth() + meses); }
+      presente += Number(p.valor) / Math.pow(fator, meses + Math.round((v - base) / 864e5) / 30);
+    }
+    const n = Math.round(nominal * 100), q = Math.round(presente * 100);
+    return { data: dataTxt, parcelasEmAberto: abertas, valorNominal: s2(n), valorQuitacao: s2(q), desconto: s2(n - q) };
+  }
+  function cpfValido(cpf) {
+    if (!/^\d{11}$/.test(cpf) || /^(\d)\1{10}$/.test(cpf)) return false;
+    const dv = (n) => { let s = 0; for (let i = 0; i < n; i++) s += Number(cpf[i]) * (n + 1 - i); const r = (s * 10) % 11; return r === 10 ? 0 : r; };
+    return dv(9) === Number(cpf[9]) && dv(10) === Number(cpf[10]);
+  }
+
+  // ---------- roteador: substitui o fetch para os endereços da API ----------
+  async function rotear(metodo, caminho, q, corpo, sinal) {
+    let m;
+    if (metodo === "GET" && caminho === "/simulacoes/condicoes")
+      return json(200, { valorMinimo: "1000.00", valorMaximo: "100000.00", prazoMinimo: 6, prazoMaximo: 48, validadeSimulacaoDias: 7,
+        taxas: PRODUTO.taxas.map(([ate, t]) => ({ prazoAte: ate, taxaMensal: t.toFixed(2) })) });
+    if (metodo === "GET" && caminho === "/simulacoes/opcoes") {
+      const v = Number(q.get("valor"));
+      if (!(v >= PRODUTO.valorMinimo && v <= PRODUTO.valorMaximo)) return problema(400, "dados-invalidos", "Valor fora da faixa", "Escolha um valor entre R$ 1.000 e R$ 100.000.");
+      const lista = [];
+      for (let prazo = 6; prazo <= 48; prazo += 6) { const c = condicoes(Math.round(v * 100), taxaRef(prazo), prazo); delete c._crono; c.totalJuros = (Number(c.totalPagar) - Number(c.valor)).toFixed(2); lista.push(c); }
+      return json(200, lista);
+    }
+    if (metodo === "POST" && caminho === "/simulacoes") {
+      const v = Number(corpo.valor), prazo = Number(corpo.prazo);
+      if (!E.clientes[corpo.clienteId]) return problema(404, "cliente-nao-encontrado", "Cliente não encontrado", "Confira o cadastro.");
+      if (!(v >= 1000 && v <= 100000) || !(prazo >= 6 && prazo <= 48)) return problema(400, "dados-invalidos", "Dados inválidos", "Valor de R$ 1.000 a R$ 100.000 e prazo de 6 a 48 meses.");
+      const c = condicoes(Math.round(v * 100), taxaRef(prazo), prazo), id = novoId("sim");
+      const s = { id, clienteId: corpo.clienteId, ...c, cronograma: c._crono.map((x) => ({ numero: x.numero, diasAteVencimento: x.dias, valor: s2(x.valorC), juros: s2(x.jurosC), amortizacao: s2(x.amortC), saldoDevedor: s2(x.saldoC) })),
+        validaAte: new Date(Date.now() + 7 * 864e5).toISOString(), utilizada: false, criadaEm: new Date().toISOString() };
+      delete s._crono; E.simulacoes[id] = s; salvar();
+      bast("INTERNO", "Propostas calcula a simulação", `Tabela Price a ${s.taxaMensal}% a.m., IOF ${reais(s.iof)}, CET ${s.cetAnual}% a.a.; válida por 7 dias`);
+      return json(201, s);
+    }
+    if (metodo === "GET" && caminho === "/recursos") return json(200, RECURSOS);
+    if (metodo === "GET" && caminho === "/ofertas/pre-aprovada") {
+      if (!RECURSOS.preAprovado.ativo) return problema(422, "recurso-desligado", "Recurso desligado", "A oferta pré-aprovada não está disponível neste banco.");
+      const c = E.clientes[q.get("clienteId")];
+      if (!c) return problema(404, "cliente-nao-encontrado", "Cliente não encontrado", "Confira o cadastro.");
+      // como a API: o maior valor que a política aprovaria agora (birô + faixa + 30% da renda), em múltiplos de R$ 500
+      const prazo = RECURSOS.preAprovado.prazoReferencia, r = avaliar(c.cpf, Math.round(Number(c.renda) * 100), POLITICA.teto * 100, prazo);
+      const validaAte = new Date(Date.now() + 7 * 864e5).toISOString();
+      if (r.decisao === "REPROVADA") return json(200, { disponivel: false, valor: "0.00", prazo, taxaMensal: taxaRef(prazo).toFixed(2), parcela: "0.00", validaAte });
+      const valorC = Math.floor(r.valorC / 50000) * 50000;
+      if (valorC < PRODUTO.valorMinimo * 100) return json(200, { disponivel: false, valor: "0.00", prazo, taxaMensal: r.taxa.toFixed(2), parcela: "0.00", validaAte });
+      bast("INTERNO", "Propostas calcula o pré-aprovado", `parcela até ${RECURSOS.preAprovado.comprometimentoMaximo * 100}% da renda em ${prazo}x`);
+      return json(200, { disponivel: true, valor: s2(valorC), prazo, taxaMensal: r.taxa.toFixed(2), parcela: s2(parcelaC(valorC, r.taxa, prazo)), validaAte });
+    }
+    if (metodo === "GET" && caminho === "/clientes") return json(200, Object.values(E.clientes).filter((c) => c.cpf === (q.get("cpf") || "").replace(/\D/g, "")));
+    if (metodo === "POST" && caminho === "/clientes") {
+      const cpf = String(corpo.cpf || "").replace(/\D/g, "");
+      if (!cpfValido(cpf)) return problema(400, "dados-invalidos", "CPF inválido", "Confira os 11 dígitos do CPF.");
+      if (Object.values(E.clientes).some((c) => c.cpf === cpf)) return problema(409, "cpf-duplicado", "CPF já cadastrado", "Entre com este CPF.");
+      const idade = (Date.now() - new Date(corpo.dataNascimento)) / (365.25 * 864e5);
+      if (!(idade >= 18 && idade < 76)) return problema(400, "dados-invalidos", "Idade fora da faixa", "O empréstimo é para pessoas de 18 a 75 anos.");
+      if (!(Number(corpo.renda) > 0)) return problema(400, "dados-invalidos", "Renda inválida", "Informe a renda mensal.");
+      const id = novoId("cli");
+      E.clientes[id] = { id, nome: corpo.nome, cpf, dataNascimento: corpo.dataNascimento, email: corpo.email, telefone: corpo.telefone, renda: Number(corpo.renda).toFixed(2), criadoEm: new Date().toISOString() }; E.clientes[id].atualizadoEm = E.clientes[id].criadoEm;
+      salvar();
+      bast("INTERNO", "Clientes valida e grava o cadastro", "CPF válido e único, idade entre 18 e 75 anos, renda informada");
+      return json(201, E.clientes[id]);
+    }
+    if (metodo === "PATCH" && (m = caminho.match(/^\/clientes\/([^/]+)$/))) {
+      const c = E.clientes[m[1]];
+      if (!c) return problema(404, "cliente-nao-encontrado", "Cliente não encontrado", "Confira o cadastro.");
+      if (corpo.renda !== undefined && !(Number(corpo.renda) > 0)) return problema(400, "dados-invalidos", "Renda inválida", "Informe a renda mensal.");
+      if (corpo.renda !== undefined) c.renda = Number(corpo.renda).toFixed(2);
+      if (corpo.email) c.email = corpo.email;
+      if (corpo.telefone) c.telefone = corpo.telefone;
+      salvar(); bast("INTERNO", "Clientes atualiza renda e contatos", "CPF e data de nascimento não mudam");
+      return json(200, c);
+    }
+    if (metodo === "POST" && caminho === "/propostas") {
+      const s = E.simulacoes[corpo.simulacaoId];
+      if (!s) return problema(404, "simulacao-nao-encontrada", "Simulação não encontrada", "Faça uma nova simulação.");
+      if (corpo.finalidade) {
+        if (!RECURSOS.finalidade.ativo) return problema(422, "recurso-desligado", "Recurso desligado", "Este banco não pede a finalidade do empréstimo.");
+        if (RECURSOS.finalidade.opcoes.length && !RECURSOS.finalidade.opcoes.includes(corpo.finalidade)) return problema(422, "finalidade-invalida", "Finalidade inválida", "Escolha uma das finalidades da lista.");
+      }
+      if (corpo.diaVencimento != null) {
+        if (!RECURSOS.vencimento.ativo) return problema(422, "recurso-desligado", "Recurso desligado", "Este banco não permite escolher o dia de vencimento.");
+        if (!RECURSOS.vencimento.dias.includes(Number(corpo.diaVencimento))) return problema(422, "dia-vencimento-invalido", "Dia de vencimento inválido", "Escolha um dos dias oferecidos.");
+      }
+      if (corpo.carenciaDias != null && Number(corpo.carenciaDias) !== 30
+          && (!RECURSOS.vencimento.ativo || !(RECURSOS.vencimento.carencias || [30]).includes(Number(corpo.carenciaDias))))
+        return problema(422, "carencia-invalida", "Prazo da 1ª parcela inválido", "A primeira parcela pode vir em: " + (RECURSOS.vencimento.carencias || [30]).join(", ") + " dias.");
+      const ja = Object.values(E.propostas).find((p) => p.simulacaoId === s.id);
+      if (ja) return json(202, vistaProposta(ja));
+      if (Object.values(E.propostas).some((p) => p.clienteId === s.clienteId && EM_ANDAMENTO.includes(p.status)))
+        return problema(422, "proposta-em-andamento", "Você já tem uma proposta em andamento", "Conclua ou cancele a proposta atual antes de pedir outra.");
+      const agora = new Date().toISOString(), id = novoId("prop");
+      const p = { id, clienteId: s.clienteId, simulacaoId: s.id, status: "EM_ANALISE", valorSolicitado: s.valor, prazo: s.prazo,
+        taxaSimulada: s.taxaMensal, parcelaSimulada: s.parcela, rendaInformada: E.clientes[s.clienteId].renda, condicoesFinais: null,
+        finalidade: corpo.finalidade || null, diaVencimento: corpo.diaVencimento != null ? Number(corpo.diaVencimento) : null,
+        carenciaDias: corpo.carenciaDias != null ? Number(corpo.carenciaDias) : null, evidenciaAceite: null,
+        historicoStatus: [{ status: "EM_ANALISE", em: agora, observacao: "proposta solicitada" }], criadaEm: agora, atualizadaEm: agora };
+      s.utilizada = true; E.propostas[id] = p; salvar();
+      bast("REST", "GET /clientes/{id} → 200", "Propostas → Clientes: confirma o cadastro e a renda atual");
+      bast("INTERNO", "Proposta gravada com o evento (outbox)", "status EM_ANALISE; uma proposta em andamento por cliente");
+      bast("EVENTO", "proposta.solicitada publicado", "→ Análise de Crédito e Notificações (confirmação do RabbitMQ)");
+      notificar(p, "proposta.solicitada", "Recebemos sua proposta", `Recebemos seu pedido de ${reais(p.valorSolicitado)} em ${p.prazo} parcelas. Ele está em análise e avisaremos assim que tivermos uma resposta.`);
+      setTimeout(() => analisar(id), TEMPO_ANALISE);
+      return json(202, vistaProposta(p));
+    }
+    if (metodo === "GET" && caminho === "/propostas") {
+      const todas = Object.values(E.propostas).filter((p) => p.clienteId === q.get("clienteId")).sort((a, b) => b.criadaEm.localeCompare(a.criadaEm));
+      const tam = Number(q.get("tamanho") || 20);
+      return json(200, { dados: todas.slice(0, tam).map(vistaProposta), meta: { pagina: 0, tamanho: tam, totalRegistros: todas.length, totalPaginas: Math.ceil(todas.length / tam) }, links: {} });
+    }
+    if ((m = caminho.match(/^\/propostas\/([^/]+)(?:\/([a-z]+))?$/))) {
+      const p = E.propostas[m[1]];
+      if (!p) return problema(404, "proposta-nao-encontrada", "Proposta não encontrada", "Confira a lista das suas propostas.");
+      const acao = m[2];
+      if (metodo === "GET" && !acao) return json(200, vistaProposta(p));
+      if (metodo === "GET" && acao === "acompanhamento") return fluxoAoVivo(p, sinal);
+      const regras = { aceite: [["APROVADA", "CONTRAPROPOSTA"], "ACEITA", "oferta aceita pelo cliente"],
+        recusa: [["APROVADA", "CONTRAPROPOSTA"], "RECUSADA", "oferta recusada pelo cliente"], cancelamento: [["EM_ANALISE"], "CANCELADA", "cancelada pelo cliente"] };
+      if (metodo === "POST" && regras[acao]) {
+        const [de, para, obs] = regras[acao];
+        if (p.status === para) return json(200, vistaProposta(p));
+        if (!de.includes(p.status)) return problema(422, "transicao-invalida", "Não é possível fazer isso agora", "Atualize a tela para ver o status atual.");
+        if (acao === "aceite") {
+          const cf = RECURSOS.confirmacaoForte;
+          if (cf.ativo && !cf.metodosAceitos.includes(corpo.metodo)) return problema(422, "confirmacao-necessaria", "Confirmação necessária", "Confirme o aceite com a biometria ou a senha do aparelho.");
+          if (corpo.metodo) p.evidenciaAceite = { metodo: corpo.metodo, dispositivo: corpo.dispositivo || null, em: new Date().toISOString(), quem: "cliente" };
+        }
+        mudar(p, para, corpo.metodo && acao === "aceite" ? obs + " (" + corpo.metodo + ")" : obs);
+        const cf = p.condicoesFinais;
+        if (para === "ACEITA") {
+          bast("EVENTO", "proposta.aceita publicado", "→ Contratos e Notificações");
+          notificar(p, "proposta.aceita", "Oferta aceita", `Você aceitou a oferta de ${reais(cf.valor)} em ${cf.prazo} parcelas de ${reais(cf.parcela)}. Estamos preparando o seu contrato.`);
+          setTimeout(() => contratar(p.id), TEMPO_CONTRATO);
+        } else {
+          bast("EVENTO", "proposta.encerrada publicado", `status final ${para} → Notificações`);
+          notificar(p, "proposta.encerrada", para === "RECUSADA" ? "Oferta recusada" : "Proposta cancelada",
+            para === "RECUSADA" ? "Registramos que você recusou a oferta. Quando quiser, é só fazer uma nova simulação." : "Sua proposta foi cancelada conforme solicitado.");
+        }
+        return json(200, vistaProposta(p));
+      }
+    }
+    if (metodo === "GET" && caminho === "/analises") {
+      const p = E.propostas[q.get("propostaId")];
+      if (!p?.analise) return problema(404, "analise-nao-encontrada", "Análise ainda não concluída", "Aguarde alguns segundos.");
+      const a = p.analise;
+      const c = E.clientes[p.clienteId], cf = p.condicoesFinais;
+      return json(200, { id: "an-" + p.id, propostaId: p.id, clienteId: p.clienteId, cpfMascarado: "***." + c.cpf.slice(3, 6) + "." + c.cpf.slice(6, 9) + "-**",
+        renda: c.renda, score: a.score, restricao: c.cpf[0] === "0", faixa: a.faixa || null, taxaReferencia: p.taxaSimulada,
+        taxaFinal: a.taxa != null ? a.taxa.toFixed(2) : null, limite: null, valorSolicitado: p.valorSolicitado, valorAprovado: cf ? cf.valor : null,
+        prazo: p.prazo, parcela: cf ? cf.parcela : null, decisao: a.decisao, motivo: a.motivo || null, comoMelhorar: a.comoMelhorar, analisadaEm: p.decididaEm || p.atualizadaEm });
+    }
+    if ((m = caminho.match(/^\/contratos\/([^/]+)(\/quitacao|\/parcelas)?$/)) && metodo === "GET") {
+      const c = E.contratos[m[1]];
+      if (!c) return problema(404, "contrato-nao-encontrado", "Contrato não encontrado", "Confira a proposta.");
+      if (m[2] === "/parcelas") return json(200, c.parcelas);
+      if (m[2] === "/quitacao") return json(200, quitacao(c, q.get("data") || new Date().toISOString().slice(0, 10)));
+      const { parcelas, ...resto } = c; return json(200, resto);
+    }
+    if (metodo === "GET" && caminho === "/notificacoes") {
+      const pid = q.get("propostaId"), cid = q.get("clienteId");
+      const lista = E.notificacoes.filter((n) => (!pid || n.propostaId === pid) && (!cid || n.clienteId === cid));
+      return json(200, { dados: lista, meta: { pagina: 0, tamanho: Math.max(20, lista.length), totalRegistros: lista.length, totalPaginas: lista.length ? 1 : 0 }, links: {} });
+    }
+    if (metodo === "GET" && caminho === "/operacao/dlq") return json(200, { fila: "analise.proposta-solicitada", aguardandoNaFila: 0, paradasNaDlq: E.dlq.length, primeiras: E.dlq });
+    if (metodo === "POST" && caminho === "/operacao/dlq/reprocessar") {
+      const n = E.dlq.length; E.dlq = [];
+      E.auditoria.unshift({ quando: new Date().toISOString(), acao: "reprocessamento-manual", fila: "analise.proposta-solicitada.dlq", quem: "operador (operador)", quantidade: n, motivo: q.get("motivo") });
+      salvar(); return json(200, { reprocessadas: n });
+    }
+    if (metodo === "GET" && caminho === "/operacao/auditoria") return json(200, E.auditoria);
+    return problema(404, "nao-encontrado", "Endereço não encontrado", "Volte ao início.");
+  }
+
+  // status ao vivo: o mesmo formato de Server-Sent Events da API real
+  function fluxoAoVivo(p, sinal) {
+    const cod = new TextEncoder();
+    let fechar;
+    const corpo = new ReadableStream({
+      start(ctrl) {
+        const enviar = (x) => { try { ctrl.enqueue(cod.encode("event:status\ndata:" + JSON.stringify(vistaProposta(x)) + "\n\n")); } catch {} };
+        const fim = () => { ouvintes[p.id] = (ouvintes[p.id] || []).filter((f) => f !== ouvir); clearTimeout(t); try { ctrl.close(); } catch {} };
+        const ouvir = (x) => { enviar(x); if (FINAIS.includes(x.status)) fim(); };
+        (ouvintes[p.id] = ouvintes[p.id] || []).push(ouvir);
+        const t = setTimeout(fim, 120000);
+        fechar = fim;
+        enviar(p);
+        if (FINAIS.includes(p.status)) fim();
+      },
+      cancel() { fechar && fechar(); } });
+    if (sinal) sinal.addEventListener("abort", () => fechar && fechar());
+    return new Response(corpo, { status: 200, headers: { "Content-Type": "text/event-stream" } });
+  }
+
+  const IDEMP = new Map();
+  function donoDe(caminho, q, corpo) {
+    const cpfDoCliente = (id) => E.clientes[id]?.cpf;
+    let m;
+    if ((m = caminho.match(/^\/propostas\/([^/]+)/))) return cpfDoCliente(E.propostas[m[1]]?.clienteId);
+    if ((m = caminho.match(/^\/contratos\/([^/]+)/))) return cpfDoCliente(E.propostas[E.contratos[m[1]]?.propostaId]?.clienteId);
+    if ((m = caminho.match(/^\/clientes\/([^/]+)/))) return cpfDoCliente(m[1]);
+    if (caminho === "/analises" || caminho === "/notificacoes") {
+      if (q.get("propostaId")) return cpfDoCliente(E.propostas[q.get("propostaId")]?.clienteId);
+      if (q.get("clienteId")) return cpfDoCliente(q.get("clienteId"));
+    }
+    if ((caminho === "/propostas" || caminho === "/ofertas/pre-aprovada") && q.get("clienteId")) return cpfDoCliente(q.get("clienteId"));
+    if ((caminho === "/simulacoes" || caminho === "/propostas") && corpo.clienteId) return cpfDoCliente(corpo.clienteId);
+    return null;
+  }
+  const fetchOriginal = window.fetch ? window.fetch.bind(window) : null;
+  window.fetch = async function (url, op = {}) {
+    const u = String(url), k = u.indexOf("/v1/");
+    if (k < 0) return fetchOriginal ? fetchOriginal(url, op) : Promise.reject(new TypeError("offline"));
+    const [caminho, busca] = u.slice(k + 3).split("?");
+    let corpo = {}; try { corpo = op.body ? JSON.parse(op.body) : {}; } catch {}
+    await new Promise((r) => setTimeout(r, 120));   // um pouco de "rede", para parecer real
+    if (op.signal?.aborted) throw new DOMException("cancelado", "AbortError");
+    const metodo = (op.method || "GET").toUpperCase(), q = new URLSearchParams(busca || ""), h = op.headers || {};
+    // "cada um vê o seu": com token "demo:<cpf>", o recurso precisa ser do dono (como o gateway + api/Acesso)
+    const tok = String(h.Authorization || "").replace("Bearer ", "");
+    if (tok.startsWith("demo:")) {
+      const cpf = tok.slice(5), dono = donoDe(caminho, q, corpo);
+      if (dono && dono !== cpf) return problema(403, "acesso-negado", "Acesso negado", "Use apenas os seus próprios identificadores.");
+    }
+    // Idempotency-Key: o mesmo pedido reenviado devolve a mesma resposta, sem refazer nada
+    const chave = h["Idempotency-Key"];
+    if (chave && IDEMP.has(metodo + caminho + chave)) {
+      const salvo = IDEMP.get(metodo + caminho + chave);
+      bast("SEGURANÇA", "Pedido repetido reconhecido (Idempotency-Key)", "mesma resposta devolvida com Idempotent-Replayed: true; nada foi criado de novo");
+      return new Response(salvo.corpo, { status: salvo.status, headers: { "Content-Type": "application/json", "Idempotent-Replayed": "true" } });
+    }
+    const resp = await rotear(metodo, caminho, q, corpo, op.signal);
+    if (chave && resp.ok) IDEMP.set(metodo + caminho + chave, { status: resp.status, corpo: await resp.clone().text() });
+    return resp;
+  };
+  window.__demo = { avaliar, condicoes, quitacao, cronograma, saldoCarencia, POLITICA, PRODUTO, taxaRef };
+})();
+
+</script>
+<script>
+/*
+ * Contrato em PDF e confirmação por biometria, usados pelo app (gateway/app) e pelas demonstrações offline.
+ *
+ * ContratoPDF.baixar(dados): monta no próprio aparelho um PDF do contrato (modelo de Cédula de Crédito Bancário)
+ *   com os dados que a API devolve (contrato, parcelas, cliente) e a evidência do aceite. Não usa bibliotecas
+ *   nem internet. No produto real o banco emite o documento oficial no servidor; este é o modelo para o app.
+ * Biometria.confirmar(opcoes): pede a biometria do aparelho (digital ou rosto) pelo padrão WebAuthn/passkeys.
+ *   Onde o navegador não oferece (arquivo aberto do disco, aparelho sem sensor), simula o sensor.
+ */
+(function () {
+  "use strict";
+
+  // ---------- PDF mínimo (fontes padrão Helvetica, A4) ----------
+  const W_REG = [278,278,355,556,556,889,667,191,333,333,389,584,278,333,278,278,556,556,556,556,556,556,556,556,556,556,278,278,584,584,584,556,
+    1015,667,667,722,722,667,611,778,722,278,500,667,556,833,722,778,667,778,722,667,611,722,667,944,667,667,611,278,278,278,469,556,
+    333,556,556,500,556,556,278,556,556,222,222,500,222,833,556,556,556,556,333,500,278,556,500,722,500,500,500,334,260,334,584];
+  const W_BOLD = [278,333,474,556,556,889,722,238,333,333,389,584,278,333,278,278,556,556,556,556,556,556,556,556,556,556,333,333,584,584,584,611,
+    975,722,722,722,722,667,611,778,722,278,556,722,611,833,722,778,667,778,722,667,611,722,667,944,667,667,611,333,278,333,584,556,
+    333,556,611,556,611,556,333,611,611,278,278,556,278,889,611,611,611,611,389,556,333,611,556,778,556,556,500,389,280,389,584];
+  const ESPECIAIS = { "–": 0x96, "—": 0x97, "•": 0x95, "“": 0x93, "”": 0x94, "‘": 0x91, "’": 0x92, "…": 0x85, "€": 0x80 };
+  function largura(txt, tam, negrito) {
+    const t = negrito ? W_BOLD : W_REG;
+    let w = 0;
+    for (const ch of txt) {
+      const base = ch.normalize("NFD")[0], c = base.charCodeAt(0);
+      w += c >= 32 && c <= 126 ? t[c - 32] : ch === "º" || ch === "ª" ? 370 : ch === "°" ? 400 : ch in ESPECIAIS ? (ch === "—" ? 1000 : ch === "•" ? 350 : 556) : 556;
+    }
+    return w * tam / 1000;
+  }
+  function codificar(txt) {
+    let s = "";
+    for (const ch of txt) {
+      let c = ESPECIAIS[ch] ?? ch.charCodeAt(0);
+      if (c > 255) c = 63;
+      const b = String.fromCharCode(c);
+      s += b === "(" || b === ")" || b === "\\" ? "\\" + b : b;
+    }
+    return s;
+  }
+  const rgb = (hex) => [1, 3, 5].map((i) => (parseInt(hex.slice(i, i + 2), 16) / 255).toFixed(3)).join(" ");
+
+  class Documento {
+    constructor() { this.paginas = []; this.nova(); }
+    nova() { this.cmd = []; this.paginas.push(this.cmd); this.y = 0; }
+    texto(x, y, txt, { tam = 10, negrito = false, cor = "#1b1530", alinhar = "esq" } = {}) {
+      const w = largura(txt, tam, negrito);
+      const px = alinhar === "dir" ? x - w : alinhar === "centro" ? x - w / 2 : x;
+      this.cmd.push(`BT /${negrito ? "F2" : "F1"} ${tam} Tf ${rgb(cor)} rg ${px.toFixed(2)} ${(842 - y).toFixed(2)} Td (${codificar(txt)}) Tj ET`);
+      return w;
+    }
+    retangulo(x, y, w, h, cor, borda) {
+      if (cor) this.cmd.push(`${rgb(cor)} rg ${x} ${842 - y - h} ${w} ${h} re f`);
+      if (borda) this.cmd.push(`${rgb(borda)} RG 0.6 w ${x} ${842 - y - h} ${w} ${h} re S`);
+    }
+    linha(x1, y1, x2, y2, cor = "#e2ddef", esp = 0.6) { this.cmd.push(`${rgb(cor)} RG ${esp} w ${x1} ${842 - y1} m ${x2} ${842 - y2} l S`); }
+    // quebra o texto em linhas que cabem na largura
+    quebrar(txt, w, tam, negrito) {
+      const linhas = []; let atual = "";
+      for (const p of txt.split(" ")) {
+        const teste = atual ? atual + " " + p : p;
+        if (largura(teste, tam, negrito) > w && atual) { linhas.push(atual); atual = p; } else atual = teste;
+      }
+      if (atual) linhas.push(atual);
+      return linhas;
+    }
+    gerar() {
+      const objs = [];
+      const add = (s) => { objs.push(s); return objs.length; };
+      const f1 = add("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>");
+      const f2 = add("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>");
+      const idPaginas = objs.length + 1; add(null);
+      const kids = [];
+      for (const c of this.paginas) {
+        const conteudo = c.join("\n");
+        const cid = add(`<< /Length ${conteudo.length} >>\nstream\n${conteudo}\nendstream`);
+        kids.push(add(`<< /Type /Page /Parent ${idPaginas} 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 ${f1} 0 R /F2 ${f2} 0 R >> >> /Contents ${cid} 0 R >>`));
+      }
+      objs[idPaginas - 1] = `<< /Type /Pages /Kids [${kids.map((k) => k + " 0 R").join(" ")}] /Count ${kids.length} >>`;
+      const cat = add(`<< /Type /Catalog /Pages ${idPaginas} 0 R >>`);
+      const info = add(`<< /Title (${codificar(this.titulo || "Contrato")}) /Producer (App Emprestimo Pessoal) >>`);
+      let pdf = "%PDF-1.4\n%\xe2\xe3\xcf\xd3\n"; const pos = [];
+      objs.forEach((o, i) => { pos.push(pdf.length); pdf += `${i + 1} 0 obj\n${o}\nendobj\n`; });
+      const xref = pdf.length;
+      pdf += `xref\n0 ${objs.length + 1}\n0000000000 65535 f \n` + pos.map((p) => String(p).padStart(10, "0") + " 00000 n \n").join("");
+      pdf += `trailer\n<< /Size ${objs.length + 1} /Root ${cat} 0 R /Info ${info} 0 R >>\nstartxref\n${xref}\n%%EOF`;
+      const bytes = new Uint8Array(pdf.length);
+      for (let i = 0; i < pdf.length; i++) bytes[i] = pdf.charCodeAt(i) & 255;
+      return new Blob([bytes], { type: "application/pdf" });
+    }
+  }
+
+  const brl = (v) => Number(v).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+  const pct = (v) => Number(v).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + "%";
+  const dataBr = (d) => d ? new Date(String(d).length === 10 ? d + "T12:00:00" : d).toLocaleDateString("pt-BR") : "—";
+  const dataHora = (d) => new Date(d).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "medium" });
+  const cpfFmt = (c) => String(c || "").replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
+  const extenso = (n) => { const u = ["zero", "um", "dois", "três", "quatro", "cinco", "seis", "sete", "oito", "nove", "dez", "onze", "doze"]; return u[n] || String(n); };
+
+  async function resumo(txt) {
+    try {
+      const b = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(txt));
+      return [...new Uint8Array(b)].map((x) => x.toString(16).padStart(2, "0")).join("");
+    } catch {
+      let h = 2166136261; for (let i = 0; i < txt.length; i++) { h ^= txt.charCodeAt(i); h = Math.imul(h, 16777619); }
+      return (h >>> 0).toString(16).padStart(8, "0").repeat(8);
+    }
+  }
+
+  async function montar({ contrato: c, parcelas, cliente, aceite, credor }) {
+    const CRED = Object.assign({ nome: "Banco Exemplo S.A.", cnpj: "00.000.000/0001-00 (fictício)", marca: "Empréstimo Pessoal", cor: "#5b2be0", sac: "0800 000 0000" }, credor || {});
+    const d = new Documento(); d.titulo = `Contrato ${c.numero}`;
+    const M = 48, L = 595 - 2 * M, ROXO = CRED.cor, CINZA = "#6b6584", TEXTO = "#1b1530";
+    const totalJuros = c.totalJuros ?? (Number(c.totalPagar) - Number(c.valor)).toFixed(2);
+    const termos = JSON.stringify({ numero: c.numero, valor: c.valor, prazo: c.prazo, taxa: c.taxaMensal, cet: c.cetAnual, parcelas: parcelas.map((p) => [p.numero, p.vencimento, p.valor]) });
+    const hash = await resumo(termos);
+
+    const topo = (pagina) => {
+      d.retangulo(0, 0, 595, 70, ROXO);
+      d.retangulo(M, 20, 30, 30, "#ffffff");
+      d.texto(M + 15, 41, CRED.marca[0], { tam: 18, negrito: true, cor: ROXO, alinhar: "centro" });
+      d.texto(M + 42, 33, CRED.marca, { tam: 13, negrito: true, cor: "#ffffff" });
+      d.texto(M + 42, 48, `${CRED.nome} · CNPJ ${CRED.cnpj}`, { tam: 8, cor: "#e7defe" });
+      d.texto(595 - M, 33, `Contrato ${c.numero}`, { tam: 10, negrito: true, cor: "#ffffff", alinhar: "dir" });
+      d.texto(595 - M, 48, pagina, { tam: 8, cor: "#e7defe", alinhar: "dir" });
+    };
+    const rodape = () => {
+      d.linha(M, 800, 595 - M, 800);
+      d.texto(M, 814, `Código de verificação: ${hash.slice(0, 16).toUpperCase()}`, { tam: 7.5, cor: CINZA });
+      d.texto(595 - M, 814, `Atendimento ${CRED.sac} · Modelo de demonstração, sem valor jurídico`, { tam: 7.5, cor: CINZA, alinhar: "dir" });
+    };
+    const secao = (y, txt) => { d.texto(M, y, txt.toUpperCase(), { tam: 9, negrito: true, cor: ROXO }); d.linha(M, y + 6, 595 - M, y + 6, ROXO, 0.8); return y + 22; };
+
+    const porPagina = 34, primeira = 26, paginasCrono = parcelas.length <= primeira ? 1 : 1 + Math.ceil((parcelas.length - primeira) / porPagina), totalPag = 1 + paginasCrono;
+    // ---------- página 1 ----------
+    topo(`Página 1 de ${totalPag}`);
+    let y = 104;
+    d.texto(M, y, "Cédula de Crédito Bancário", { tam: 20, negrito: true, cor: TEXTO });
+    d.texto(M, y + 18, "Empréstimo pessoal com parcelas fixas (Tabela Price)", { tam: 10.5, cor: CINZA });
+    d.retangulo(595 - M - 170, y - 16, 170, 34, "#fff4e0");
+    d.texto(595 - M - 85, y - 1, "MODELO DE DEMONSTRAÇÃO", { tam: 8.5, negrito: true, cor: "#9a5b00", alinhar: "centro" });
+    d.texto(595 - M - 85, y + 11, "sem valor jurídico", { tam: 8, cor: "#9a5b00", alinhar: "centro" });
+
+    // destaque: valores principais
+    y += 40;
+    d.retangulo(M, y, L, 62, "#f1ecff");
+    const caixas = [["Você recebe na conta", brl(c.valorLiberado)], ["Parcelas", `${c.prazo}× de ${brl(c.valorParcela)}`], ["Custo efetivo total", `${pct(c.cetAnual)} a.a.`]];
+    caixas.forEach(([r, v], i) => {
+      const x = M + 16 + i * (L / 3);
+      d.texto(x, y + 22, r, { tam: 8.5, cor: CINZA });
+      d.texto(x, y + 44, v, { tam: 14, negrito: true, cor: i === 0 ? ROXO : TEXTO });
+    });
+
+    y = secao(y + 86, "1. Partes");
+    const par = (x, yy, r, v, w = 230) => { d.texto(x, yy, r, { tam: 8, cor: CINZA }); d.texto(x, yy + 13, v, { tam: 10, negrito: true, cor: TEXTO }); void w; };
+    par(M, y, "Emitente (cliente)", cliente?.nome || "—"); par(M + 260, y, "CPF", cpfFmt(cliente?.cpf));
+    par(M, y + 32, "E-mail", cliente?.email || "—"); par(M + 260, y + 32, "Celular", cliente?.telefone || "—");
+    par(M, y + 64, "Credor", CRED.nome); par(M + 260, y + 64, "CNPJ", CRED.cnpj);
+
+    y = secao(y + 100, "2. Condições do crédito");
+    const linhas = [
+      ["Valor do crédito", brl(c.valor)], ["IOF (imposto, descontado do valor)", brl(c.iof)], ["Valor liberado na conta", brl(c.valorLiberado)],
+      ["Prazo", `${c.prazo} parcelas mensais`], ["Valor de cada parcela", brl(c.valorParcela)],
+      ["Taxa de juros", `${pct(c.taxaMensal)} ao mês${c.taxaAnual ? ` · ${pct(c.taxaAnual)} ao ano` : ""}`],
+      ["Custo efetivo total (CET)", `${pct(c.cetMensal)} ao mês · ${pct(c.cetAnual)} ao ano`],
+      ["Total de juros", brl(totalJuros)], ["Total a pagar", brl(c.totalPagar)],
+      ["Data da contratação", dataBr(c.dataContratacao)], ["Primeiro vencimento", dataBr(c.primeiroVencimento)], ["Último vencimento", dataBr(c.ultimoVencimento)],
+      ["Sistema de amortização", "Tabela Price (parcelas iguais)"]];
+    linhas.forEach(([r, v], i) => {
+      if (i % 2 === 0) d.retangulo(M, y - 11, L, 17, "#faf9fd");
+      d.texto(M + 8, y + 1, r, { tam: 9.5, cor: CINZA });
+      d.texto(595 - M - 8, y + 1, v, { tam: 9.5, negrito: true, cor: TEXTO, alinhar: "dir" });
+      y += 17;
+    });
+
+    y = secao(y + 12, "3. Cláusulas principais");
+    const clausulas = [
+      ["Objeto.", `O credor empresta ao emitente ${brl(c.valor)}. Descontado o IOF, ${brl(c.valorLiberado)} são creditados na conta do emitente.`],
+      ["Pagamento.", `O emitente paga ${c.prazo} parcelas mensais e iguais de ${brl(c.valorParcela)}, nas datas do cronograma anexo.`],
+      ["Atraso.", "Sobre a parcela em atraso incidem multa de 2% e juros de mora de 1% ao mês, proporcionais aos dias de atraso."],
+      ["Quitação antecipada.", "O emitente pode quitar ou adiantar parcelas a qualquer momento, com redução proporcional dos juros (CDC, art. 52, § 2º)."],
+      ["Desistência.", `O emitente pode desistir em até 7 dias da contratação, devolvendo o valor recebido, sem juros (CDC, art. 49).`],
+      ["Dados pessoais.", "Os dados são tratados só para analisar, formalizar e administrar este crédito, conforme a LGPD (Lei 13.709/2018)."]];
+    clausulas.forEach(([t, txt], i) => {
+      const lin = d.quebrar(txt, L - 18, 9.2);
+      d.texto(M, y, `${i + 1}.`, { tam: 9.2, negrito: true, cor: ROXO });
+      d.texto(M + 14, y, t, { tam: 9.2, negrito: true, cor: TEXTO });
+      const off = largura(t + " ", 9.2, true);
+      const primeira = d.quebrar(txt, L - 18 - off, 9.2)[0];
+      d.texto(M + 14 + off, y, primeira, { tam: 9.2, cor: TEXTO });
+      const resto = d.quebrar(txt.slice(primeira.length).trim(), L - 18, 9.2);
+      resto.forEach((l) => { y += 12.5; d.texto(M + 14, y, l, { tam: 9.2, cor: TEXTO }); });
+      void lin; y += 15;
+    });
+
+    rodape();
+
+    // ---------- cronograma ----------
+    for (let pg = 0; pg < paginasCrono; pg++) {
+      d.nova(); topo(`Página ${pg + 2} de ${totalPag}`);
+      let y = 104, yy;
+      if (pg === 0) {
+        y = secao(y, "4. Aceite eletrônico");
+      d.retangulo(M, y - 12, L, 58, "#ffffff", "#d9cff8");
+      const metodo = { "biometria-do-aparelho": "biometria do aparelho (WebAuthn)", "biometria-simulada": "biometria (simulada)", senha: "senha do app" }[aceite?.metodo] || "confirmação no app";
+      d.texto(M + 12, y + 4, aceite ? `Aceito por ${cliente?.nome || "emitente"} em ${dataHora(aceite.em)}` : `Contratado em ${dataBr(c.dataContratacao)}`, { tam: 10, negrito: true, cor: TEXTO });
+      d.texto(M + 12, y + 19, `Confirmação por ${metodo}. O emitente declarou ter lido as condições, o CET e o cronograma.`, { tam: 8.4, cor: CINZA });
+      d.texto(M + 12, y + 34, `Resumo criptográfico dos termos (SHA-256): ${hash.slice(0, 48)}…`, { tam: 7.6, cor: CINZA });
+        y += 70;
+      }
+      yy = y;
+      d.texto(M, yy, pg === 0 ? "Anexo · Cronograma de pagamento" : "Cronograma de pagamento (continuação)", { tam: 15, negrito: true, cor: TEXTO });
+      yy += 30;
+      // colunas: Nº e vencimento à esquerda; valores alinhados à direita
+      const X = { n: M + 8, venc: M + 44, parc: M + 225, juros: M + 305, amort: M + 400, saldo: 595 - M - 8 };
+      d.retangulo(M, yy - 13, L, 20, ROXO);
+      const cab = { tam: 8.5, negrito: true, cor: "#ffffff" };
+      d.texto(X.n, yy + 1, "Nº", cab); d.texto(X.venc, yy + 1, "Vencimento", cab);
+      d.texto(X.parc, yy + 1, "Parcela", { ...cab, alinhar: "dir" }); d.texto(X.juros, yy + 1, "Juros", { ...cab, alinhar: "dir" });
+      d.texto(X.amort, yy + 1, "Amortização", { ...cab, alinhar: "dir" }); d.texto(X.saldo, yy + 1, "Saldo devedor", { ...cab, alinhar: "dir" });
+      yy += 20;
+      const ini = pg === 0 ? 0 : primeira + (pg - 1) * porPagina, fimP = pg === 0 ? primeira : ini + porPagina;
+      parcelas.slice(ini, fimP).forEach((p, i) => {
+        if (i % 2 === 1) d.retangulo(M, yy - 11, L, 18, "#faf9fd");
+        d.texto(X.n, yy + 1, String(p.numero), { tam: 9 });
+        d.texto(X.venc, yy + 1, dataBr(p.vencimento), { tam: 9 });
+        d.texto(X.parc, yy + 1, brl(p.valor), { tam: 9, negrito: true, alinhar: "dir" });
+        d.texto(X.juros, yy + 1, brl(p.juros), { tam: 9, cor: CINZA, alinhar: "dir" });
+        d.texto(X.amort, yy + 1, brl(p.amortizacao), { tam: 9, cor: CINZA, alinhar: "dir" });
+        d.texto(X.saldo, yy + 1, brl(p.saldoDevedor), { tam: 9, alinhar: "dir" });
+        yy += 18;
+      });
+      if (pg === paginasCrono - 1) {
+        yy += 8; d.linha(M, yy - 6, 595 - M, yy - 6, "#cfc6ee", 0.8);
+        d.texto(X.venc, yy + 8, "Totais", { tam: 9.5, negrito: true });
+        d.texto(X.parc, yy + 8, brl(c.totalPagar), { tam: 9.5, negrito: true, alinhar: "dir" });
+        d.texto(X.juros, yy + 8, brl(totalJuros), { tam: 9.5, negrito: true, alinhar: "dir" });
+        d.texto(X.amort, yy + 8, brl(c.valor), { tam: 9.5, negrito: true, alinhar: "dir" });
+        d.texto(M, yy + 34, `Os centavos do arredondamento são ajustados na última parcela. Parcelas pagas antes do vencimento têm desconto dos juros.`, { tam: 8.5, cor: CINZA });
+      }
+      rodape();
+    }
+    return d.gerar();
+  }
+
+  function baixarBlob(blob, nome) {
+    const url = URL.createObjectURL(blob), a = document.createElement("a");
+    a.href = url; a.download = nome; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 30000);
+  }
+  window.ContratoPDF = {
+    gerar: montar,
+    async baixar(dados) { const blob = await montar(dados); baixarBlob(blob, `contrato-${dados.contrato.numero}.pdf`); return blob; },
+  };
+
+  // ---------- biometria ----------
+  const CSS = `.bio-veu{position:fixed;inset:0;background:rgba(23,17,43,.5);display:flex;align-items:flex-end;justify-content:center;z-index:50;animation:bioF .2s}
+  .bio-veu.dentro{position:absolute}
+  .bio-folha{background:var(--card,#fff);color:var(--text,#1b1530);width:100%;max-width:480px;border-radius:26px 26px 0 0;padding:12px 22px 26px;text-align:center;font:15px/1.45 system-ui,sans-serif;animation:bioS .22s}
+  .bio-folha::before{content:"";display:block;width:40px;height:4px;border-radius:4px;background:#ddd6ee;margin:0 auto 16px}
+  .bio-folha h3{margin:4px 0 6px;font-size:19px}.bio-folha p{margin:0 0 16px;color:var(--muted,#6b6584);font-size:14px}
+  .bio-ic{width:84px;height:84px;margin:6px auto 12px;border-radius:50%;display:grid;place-items:center;color:var(--roxo,var(--acc,#5b2be0));background:var(--roxo-soft,var(--acc-soft,#f1ecff));position:relative}
+  .bio-ic.lendo::after{content:"";position:absolute;inset:-6px;border-radius:50%;border:3px solid var(--roxo,var(--acc,#5b2be0));border-right-color:transparent;animation:bioG .9s linear infinite}
+  .bio-ic.ok{background:#e5f6ef;color:#0f8a5f}.bio-ic.erro{background:#fdecea;color:#c0322a}
+  .bio-btn{display:block;width:100%;border:0;border-radius:16px;background:var(--grad,var(--botao-bg,var(--acc,#5b2be0)));color:#fff;font:800 15.5px system-ui,sans-serif;padding:15px;cursor:pointer}
+  .bio-btn:disabled{opacity:.5}
+  .bio-txt{display:block;width:100%;border:0;background:none;color:var(--muted,#6b6584);font:700 14px system-ui,sans-serif;padding:12px;cursor:pointer}
+  .bio-senha{display:block;width:100%;padding:13px;border:1.5px solid var(--line,#e9e5f3);border-radius:12px;font-size:16px;margin:0 0 12px;background:var(--card,#fff);color:inherit;text-align:center}
+  .bio-nota{font-size:12px!important;margin:10px 0 0!important}
+  @keyframes bioG{to{transform:rotate(360deg)}}@keyframes bioF{from{opacity:0}}@keyframes bioS{from{transform:translateY(30px)}}`;
+  const DIGITAL = '<svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M12 11v3a8 8 0 0 1-2 5"/><path d="M8.5 7.5A5 5 0 0 1 17 11v2a12 12 0 0 1-.8 4.5"/><path d="M5.5 9.5A7 7 0 0 1 12 4a7 7 0 0 1 7 7v1"/><path d="M7 12a5 5 0 0 1 .2-1.5M7 15c0 1.5-.4 3-1 4M14.5 13v1a10 10 0 0 1-1.6 5.5"/></svg>';
+  const OK = '<svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+  let cssPronto = false;
+  const b64 = (buf) => btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  const deB64 = (s) => Uint8Array.from(atob(s.replace(/-/g, "+").replace(/_/g, "/")), (c) => c.charCodeAt(0));
+
+  // biometria real do aparelho pelo WebAuthn (passkey local, com verificação do usuário)
+  async function biometriaReal(usuario) {
+    if (!window.PublicKeyCredential || !window.isSecureContext || !location.hostname) return { indisponivel: true };
+    try { if (!(await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable())) return { indisponivel: true }; } catch { return { indisponivel: true }; }
+    const chave = "biometria-" + usuario.id, desafio = crypto.getRandomValues(new Uint8Array(32));
+    try {
+      let salvo = null; try { salvo = localStorage.getItem(chave); } catch {}
+      if (salvo) {
+        await navigator.credentials.get({ publicKey: { challenge: desafio, allowCredentials: [{ type: "public-key", id: deB64(salvo) }], userVerification: "required", timeout: 60000 } });
+      } else {
+        const cred = await navigator.credentials.create({ publicKey: {
+          challenge: desafio, rp: { name: "Empréstimo Pessoal" },
+          user: { id: new TextEncoder().encode(usuario.id), name: usuario.id, displayName: usuario.nome || usuario.id },
+          pubKeyCredParams: [{ type: "public-key", alg: -7 }, { type: "public-key", alg: -257 }],
+          authenticatorSelection: { authenticatorAttachment: "platform", userVerification: "required", residentKey: "discouraged" }, timeout: 60000 } });
+        try { localStorage.setItem(chave, b64(cred.rawId)); } catch {}
+      }
+      return { ok: true };
+    } catch (e) {
+      if (e && e.name === "NotAllowedError") return { cancelado: true };
+      return { indisponivel: true };
+    }
+  }
+
+  window.Biometria = {
+    /**
+     * Mostra a folha de confirmação e resolve com a evidência do aceite ({ metodo, em }) ou null se o cliente desistir.
+     * opcoes: { usuario: { id, nome }, titulo, texto, dentro: elemento onde a folha aparece, senha: (txt) => boolean,
+     *           senhaSugerida: texto já preenchido no campo (demonstração), real: true para exigir o sensor de verdade }
+     * Na demonstração (padrão), se o aparelho não deixar usar o sensor (arquivo aberto do celular, sem passkey,
+     * leitura cancelada), a leitura é simulada e o fluxo segue. Com real: true, o erro aparece e o cliente tenta de novo.
+     */
+    confirmar(opcoes = {}) {
+      if (!cssPronto) { const s = document.createElement("style"); s.textContent = CSS; document.head.appendChild(s); cssPronto = true; }
+      const alvo = opcoes.dentro || document.body;
+      const veu = document.createElement("div"); veu.className = "bio-veu" + (opcoes.dentro ? " dentro" : "");
+      veu.innerHTML = `<div class="bio-folha" role="dialog" aria-modal="true"><div class="bio-ic" id="bio-ic">${DIGITAL}</div>
+        <h3 id="bio-t">${opcoes.titulo || "Confirme com sua biometria"}</h3><p id="bio-p">${opcoes.texto || "Use a digital ou o rosto cadastrados no aparelho para assinar."}</p>
+        <div id="bio-acoes"><button class="bio-btn" id="bio-sim">Usar biometria</button>${opcoes.senha ? '<button class="bio-txt" id="bio-senha">Usar senha</button>' : ""}<button class="bio-txt" id="bio-nao">Agora não</button></div></div>`;
+      alvo.appendChild(veu);
+      const q = (s) => veu.querySelector(s);
+      return new Promise((resolver) => {
+        const fim = (v) => { veu.remove(); resolver(v); };
+        const sucesso = (metodo) => {
+          q("#bio-ic").className = "bio-ic ok"; q("#bio-ic").innerHTML = OK; q("#bio-t").textContent = "Confirmado"; q("#bio-p").textContent = "Assinatura registrada.";
+          q("#bio-acoes").innerHTML = "";
+          setTimeout(() => fim({ metodo, em: new Date().toISOString() }), 700);
+        };
+        veu.onclick = (e) => { if (e.target === veu) fim(null); };
+        q("#bio-nao").onclick = () => fim(null);
+        q("#bio-sim").onclick = async () => {
+          q("#bio-sim").disabled = true; q("#bio-ic").className = "bio-ic lendo"; q("#bio-p").textContent = "Aguardando a leitura…";
+          // o sensor real tem até 20 s; se não responder, segue a demonstração
+          const r = await Promise.race([biometriaReal(opcoes.usuario || { id: "cliente" }), new Promise((ok) => setTimeout(() => ok({ indisponivel: true }), 20000))]);
+          if (r.ok) return sucesso("biometria-do-aparelho");
+          if (r.cancelado && opcoes.real) {
+            q("#bio-ic").className = "bio-ic erro"; q("#bio-p").textContent = "Não foi possível confirmar. Tente de novo.";
+            q("#bio-sim").disabled = false; return;
+          }
+          // sem sensor disponível neste navegador: simula a leitura
+          q("#bio-p").textContent = "Toque no sensor…";
+          await new Promise((ok) => setTimeout(ok, 1100));
+          sucesso("biometria-simulada");
+        };
+        if (q("#bio-senha")) q("#bio-senha").onclick = () => {
+          q("#bio-t").textContent = "Confirme com sua senha"; q("#bio-p").textContent = "Digite a senha do app.";
+          q("#bio-acoes").innerHTML = `<input class="bio-senha" id="bio-campo" type="password" autocomplete="current-password" aria-label="Senha" value="${opcoes.senhaSugerida ? String(opcoes.senhaSugerida).replace(/"/g, "&quot;") : ""}"><button class="bio-btn" id="bio-ok">Confirmar</button><button class="bio-txt" id="bio-nao2">Agora não</button>`;
+          q("#bio-campo").focus();
+          q("#bio-nao2").onclick = () => fim(null);
+          const conferir = () => { if (opcoes.senha(q("#bio-campo").value)) sucesso("senha"); else { q("#bio-p").textContent = "Senha incorreta. Tente de novo."; q("#bio-ic").className = "bio-ic erro"; } };
+          q("#bio-ok").onclick = conferir;
+          q("#bio-campo").onkeydown = (e) => { if (e.key === "Enter") conferir(); };
+        };
+      });
+    },
+  };
+})();
+
+</script>
+<script>
+/*
+ * Recursos opcionais do app (cada banco liga, desliga ou troca pela sua implementação).
+ *
+ * O painel vem da API (GET /v1/recursos, bloco "recursos" do application.yml). O app só pergunta
+ * Recursos.ligado("nome") e chama o componente; se o recurso estiver desligado, a tela simplesmente
+ * não mostra nada. Trocar um componente = substituir a função aqui (ex.: Recursos.provaDeVida pelo SDK
+ * de biometria facial do banco), sem mexer na jornada.
+ *
+ * Componentes: provaDeVida, openFinance, pix, ajuda (com especialista), lembretes, aparencia, antecipar.
+ * Todos devolvem uma Promise com o resultado ou null quando o cliente desiste.
+ */
+(function () {
+  "use strict";
+  const PADRAO = {
+    preAprovado: { ativo: true }, finalidade: { ativo: true, opcoes: [] }, vencimento: { ativo: true, dias: [5, 10, 15, 20, 25] },
+    confirmacaoForte: { ativo: false, metodosAceitos: [] },
+    app: { biometria: true, "prova-de-vida": true, "open-finance": true, pix: true, antecipacao: true, lembretes: true, ajuda: true, "tema-escuro": true, ofertas: true },
+  };
+  let painel = PADRAO;
+  const ligado = (nome) => (painel[nome] && typeof painel[nome] === "object" ? !!painel[nome].ativo : !!(painel.app || {})[nome]);
+  const brl = (v) => Number(v).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+  const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const espera = (ms) => new Promise((r) => setTimeout(r, ms));
+
+  // ---------- visual próprio (usa as cores do app quando existirem) ----------
+  const CSS = `
+  .rc-veu{position:absolute;inset:0;background:rgba(23,17,43,.45);display:flex;align-items:flex-end;z-index:20;opacity:0;transition:opacity .2s}
+  .rc-veu.on{opacity:1}
+  .rc-folha{background:var(--card,#fff);color:var(--text,#1b1530);width:100%;max-height:92%;overflow-y:auto;border-radius:26px 26px 0 0;padding:10px 20px 24px;transform:translateY(30px);transition:transform .2s;font:15px/1.45 var(--sans,system-ui,sans-serif)}
+  .rc-veu.on .rc-folha{transform:none}
+  .rc-folha::before{content:"";display:block;width:40px;height:4px;border-radius:4px;background:var(--line,#ddd6ee);margin:0 auto 14px}
+  .rc-folha h3{margin:0 0 6px;font-size:18px}.rc-folha p{margin:0 0 12px;color:var(--muted,#6b6584);font-size:14px}
+  .rc-bt{display:block;width:100%;border:0;border-radius:16px;background:var(--grad,var(--roxo,#5b2be0));color:#fff;font:800 15px var(--sans,system-ui);padding:14px;margin-top:8px;cursor:pointer}
+  .rc-bt:disabled{opacity:.45;cursor:default}
+  .rc-bt2{display:block;width:100%;border:1.5px solid var(--roxo-linha,#e2d8ff);border-radius:16px;background:var(--card,#fff);color:var(--roxo,#5b2be0);font:800 14.5px var(--sans,system-ui);padding:12px;margin-top:8px;cursor:pointer}
+  .rc-tx{display:block;width:100%;border:0;background:none;color:var(--muted,#6b6584);font:700 14px var(--sans,system-ui);padding:12px;cursor:pointer}
+  .rc-lista{display:grid;gap:8px;margin:4px 0 6px}
+  .rc-op{display:flex;align-items:center;gap:12px;width:100%;text-align:left;border:1.5px solid var(--line,#e9e5f3);background:var(--card,#fff);color:inherit;border-radius:14px;padding:12px;cursor:pointer;font:inherit}
+  .rc-op.sel{border-color:var(--roxo,#5b2be0);background:var(--roxo-soft,#f1ecff)}
+  .rc-op i{width:36px;height:36px;border-radius:11px;display:grid;place-items:center;font-style:normal;font-weight:800;color:#fff;flex:0 0 auto}
+  .rc-op b{display:block;font-size:14px}.rc-op span{font-size:12.5px;color:var(--muted,#6b6584)}
+  .rc-chips{display:flex;flex-wrap:wrap;gap:7px;margin:6px 0 12px}
+  .rc-chips button{border:1.5px solid var(--line,#e9e5f3);background:var(--card,#fff);color:inherit;border-radius:999px;padding:8px 13px;font:700 13px var(--sans,system-ui);cursor:pointer}
+  .rc-chips button.sel{background:var(--roxo,#5b2be0);border-color:var(--roxo,#5b2be0);color:#fff}
+  .rc-sw{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 2px;border-bottom:1px solid var(--line,#e9e5f3);font-size:14.5px}
+  .rc-sw:last-of-type{border-bottom:0}.rc-sw span{display:block;font-size:12.5px;color:var(--muted,#6b6584)}
+  .rc-sw input{appearance:none;width:44px;height:26px;border-radius:26px;background:#cfc8e0;position:relative;flex:0 0 auto;cursor:pointer;transition:background .15s;margin:0}
+  .rc-sw input::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:left .15s}
+  .rc-sw input:checked{background:var(--roxo,#5b2be0)}.rc-sw input:checked::after{left:21px}
+  .rc-camera{position:relative;width:220px;height:260px;margin:6px auto 12px;border-radius:50% / 45%;overflow:hidden;background:#201838;display:grid;place-items:center}
+  .rc-camera video{width:100%;height:100%;object-fit:cover;transform:scaleX(-1)}
+  .rc-camera .rc-rosto{position:absolute;inset:0;display:grid;place-items:center;color:#cbbfff}
+  .rc-camera::after{content:"";position:absolute;inset:0;border-radius:inherit;border:4px solid rgba(255,255,255,.25)}
+  .rc-camera.ok::after{border-color:#16b67f}
+  .rc-camera .rc-varre{position:absolute;left:0;right:0;height:3px;background:linear-gradient(90deg,transparent,#b79cff,transparent);top:0;animation:rc-varre 1.6s ease-in-out infinite}
+  @keyframes rc-varre{50%{top:calc(100% - 3px)}}
+  .rc-instr{text-align:center;font-weight:800;font-size:15px;min-height:22px;margin:0 0 4px}
+  .rc-barra{height:6px;border-radius:6px;background:var(--line,#e9e5f3);overflow:hidden;margin:8px 0 4px}.rc-barra span{display:block;height:100%;width:0;background:var(--roxo,#5b2be0);transition:width .4s}
+  .rc-pix{text-align:center;padding:6px 0 4px}
+  .rc-pix .rc-circ{width:78px;height:78px;border-radius:50%;margin:4px auto 12px;display:grid;place-items:center;background:#16b67f;color:#fff;animation:rc-pula .5s ease-out}
+  @keyframes rc-pula{0%{transform:scale(.4);opacity:0}70%{transform:scale(1.1)}100%{transform:none;opacity:1}}
+  .rc-pix .rc-valor{font-size:30px;font-weight:800;letter-spacing:-.5px;margin:0 0 4px}
+  .rc-chat{display:flex;flex-direction:column;gap:8px;max-height:260px;overflow-y:auto;padding:4px 0 10px}
+  .rc-msg{max-width:84%;padding:9px 12px;border-radius:16px;font-size:13.5px;background:var(--roxo-soft,#f1ecff);color:var(--text,#1b1530)}
+  .rc-msg.eu{align-self:flex-end;background:var(--roxo,#5b2be0);color:#fff;border-bottom-right-radius:4px}
+  .rc-msg.ela{border-bottom-left-radius:4px}
+  .rc-msg small{display:block;font-weight:800;font-size:11px;opacity:.75;margin-bottom:2px}
+  .rc-digita{display:flex;gap:8px}.rc-digita input{flex:1;border:1.5px solid var(--line,#e9e5f3);border-radius:14px;padding:11px 12px;font:inherit;background:var(--card,#fff);color:inherit}
+  .rc-digita button{border:0;border-radius:14px;background:var(--roxo,#5b2be0);color:#fff;font-weight:800;padding:0 14px;cursor:pointer}
+  .rc-faq summary{cursor:pointer;font-weight:700;font-size:14px;padding:11px 0;border-bottom:1px solid var(--line,#e9e5f3);list-style:none}
+  .rc-faq summary::-webkit-details-marker{display:none}
+  .rc-faq p{font-size:13.5px;margin:8px 0 10px}
+  .rc-linhas{display:grid;grid-template-columns:1fr auto;gap:7px 12px;margin:10px 0 4px;font-size:13.5px}
+  .rc-linhas dt{color:var(--muted,#6b6584)}.rc-linhas dd{margin:0;text-align:right;font-weight:700}
+  .rc-forte{color:var(--ok,#0f8a5f)}
+  input.rc-faixa{width:100%;accent-color:var(--roxo,#5b2be0);margin:10px 0 2px}`;
+  function estilo() {
+    if (document.getElementById("rc-css")) return;
+    const s = document.createElement("style"); s.id = "rc-css"; s.textContent = CSS; document.head.appendChild(s);
+  }
+
+  /** Abre uma folha por baixo; montar(el, fechar) liga os botões. Devolve o valor passado a fechar(). */
+  function folha(dentro, html, montar) {
+    estilo();
+    const alvo = dentro || document.body;
+    const veu = document.createElement("div"); veu.className = "rc-veu";
+    veu.innerHTML = `<div class="rc-folha" role="dialog" aria-modal="true">${html}</div>`;
+    if (alvo === document.body) veu.style.position = "fixed";
+    alvo.appendChild(veu); requestAnimationFrame(() => veu.classList.add("on"));
+    return new Promise((ok) => {
+      let feito = false;
+      const fechar = (v) => { if (feito) return; feito = true; veu.classList.remove("on"); setTimeout(() => veu.remove(), 200); ok(v ?? null); };
+      veu.addEventListener("click", (e) => { if (e.target === veu) fechar(null); });
+      veu.querySelectorAll("[data-fechar]").forEach((b) => b.addEventListener("click", () => fechar(null)));
+      montar && montar(veu.querySelector(".rc-folha"), fechar);
+    });
+  }
+  const ICONE = {
+    rosto: '<svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><circle cx="12" cy="9" r="4.2"/><path d="M4.5 20c1.4-3.6 4.2-5.2 7.5-5.2s6.1 1.6 7.5 5.2"/></svg>',
+    check: '<svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
+  };
+
+  // ---------- prova de vida (selfie) ----------
+  /** Usa a câmera frontal quando o aparelho permite; senão, simula a captura. Banco real: trocar pelo SDK facial. */
+  function provaDeVida({ dentro, nome } = {}) {
+    let stream = null;
+    const parar = () => { try { stream && stream.getTracks().forEach((t) => t.stop()); } catch {} };
+    return folha(dentro, `<h3>Confirme que é você</h3><p>Uma selfie rápida protege seu CPF contra pedidos feitos por outra pessoa. Fica só entre você e o banco.</p>
+      <div class="rc-camera" id="rc-cam"><div class="rc-rosto">${ICONE.rosto}</div></div>
+      <div class="rc-instr" id="rc-instr">Centralize o rosto no oval</div><div class="rc-barra"><span id="rc-prog"></span></div>
+      <button class="rc-bt" id="rc-ir">Tirar selfie</button><button class="rc-tx" data-fechar>Agora não</button>`, (el, fechar) => {
+      const cam = el.querySelector("#rc-cam"), instr = el.querySelector("#rc-instr"), prog = el.querySelector("#rc-prog"), bt = el.querySelector("#rc-ir");
+      el.querySelector("[data-fechar]").addEventListener("click", parar);
+      bt.onclick = async () => {
+        bt.disabled = true;
+        let real = false;
+        try {
+          if (navigator.mediaDevices?.getUserMedia && location.protocol !== "file:") {
+            stream = await Promise.race([navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } }), espera(4000).then(() => null)]);
+            if (stream) { const v = document.createElement("video"); v.autoplay = v.muted = v.playsInline = true; v.srcObject = stream; cam.innerHTML = ""; cam.appendChild(v); real = true; }
+          }
+        } catch { stream = null; }
+        cam.insertAdjacentHTML("beforeend", '<div class="rc-varre"></div>');
+        const passos = ["Olhe para a câmera", "Pisque devagar", "Vire o rosto um pouco para o lado", "Pronto, conferindo…"];
+        for (let i = 0; i < passos.length; i++) { instr.textContent = passos[i]; prog.style.width = ((i + 1) / passos.length * 100) + "%"; await espera(900); }
+        parar();
+        cam.classList.add("ok"); cam.querySelector(".rc-varre")?.remove();
+        cam.innerHTML = `<div class="rc-rosto" style="color:#16b67f">${ICONE.check}</div>`;
+        instr.textContent = nome ? `Identidade confirmada, ${String(nome).split(" ")[0]}` : "Identidade confirmada";
+        await espera(800);
+        fechar({ metodo: real ? "selfie-com-prova-de-vida" : "selfie-simulada", em: new Date().toISOString() });
+      };
+    }).finally(parar);
+  }
+
+  // ---------- Open Finance (renda de outro banco, com consentimento) ----------
+  const INSTITUICOES = [["Banco Azul", "#2563eb"], ["Banco Verde", "#16a34a"], ["Cooperativa Sul", "#d97706"], ["Conta Digital Ágil", "#db2777"]];
+  /** Simula o consentimento e devolve a renda confirmada. Banco real: trocar pela jornada do Open Finance Brasil. */
+  function openFinance({ dentro, rendaAtual } = {}) {
+    return folha(dentro, `<h3>Comprove sua renda em segundos</h3><p>Com o Open Finance, você autoriza seu outro banco a mostrar só a renda dos últimos 3 meses. Sem enviar documento.</p>
+      <div class="rc-lista" id="rc-bancos">${INSTITUICOES.map(([n, c], i) => `<button class="rc-op" data-i="${i}"><i style="background:${c}">${n.split(" ").map((x) => x[0]).join("").slice(0, 2)}</i><div><b>${n}</b><span>Instituição participante</span></div></button>`).join("")}</div>
+      <button class="rc-bt" id="rc-ir" disabled>Continuar</button><button class="rc-tx" data-fechar>Agora não</button>`, (el, fechar) => {
+      let i = -1;
+      el.querySelectorAll("[data-i]").forEach((b) => b.onclick = () => { i = Number(b.dataset.i); el.querySelectorAll("[data-i]").forEach((x) => x.classList.toggle("sel", x === b)); el.querySelector("#rc-ir").disabled = false; });
+      el.querySelector("#rc-ir").onclick = async () => {
+        const [nome] = INSTITUICOES[i];
+        el.innerHTML = `<h3>Autorize o compartilhamento</h3><p>${esc(nome)} vai compartilhar com este banco:</p>
+          <dl class="rc-linhas"><dt>Dados</dt><dd>Renda (créditos de salário)</dd><dt>Período</dt><dd>Últimos 3 meses</dd><dt>Validade</dt><dd>12 meses</dd><dt>Finalidade</dt><dd>Análise de crédito</dd></dl>
+          <p style="font-size:12.5px">Você pode cancelar esta autorização quando quiser.</p>
+          <button class="rc-bt" id="rc-ok">Autorizar</button><button class="rc-tx" id="rc-nao">Cancelar</button>`;
+        el.querySelector("#rc-nao").onclick = () => fechar(null);
+        el.querySelector("#rc-ok").onclick = async () => {
+          el.innerHTML = `<h3>Conectando com ${esc(nome)}…</h3><p>Você volta para cá automaticamente.</p><div class="rc-barra"><span id="rc-prog"></span></div>`;
+          const prog = el.querySelector("#rc-prog");
+          for (const w of [30, 65, 100]) { prog.style.width = w + "%"; await espera(550); }
+          const renda = Number(rendaAtual) > 0 ? Number(rendaAtual) : 3500;
+          el.innerHTML = `<div class="rc-pix"><div class="rc-circ">${ICONE.check}</div><h3>Renda confirmada</h3><p>Média dos últimos 3 meses em ${esc(nome)}</p><div class="rc-valor">${brl(renda)}</div></div><button class="rc-bt" id="rc-fim">Usar esta renda</button>`;
+          el.querySelector("#rc-fim").onclick = () => fechar({ instituicao: nome, renda, em: new Date().toISOString() });
+        };
+      };
+    });
+  }
+
+  // ---------- Pix: o dinheiro caiu na conta ----------
+  function pix({ dentro, valor, chave } = {}) {
+    return folha(dentro, `<div class="rc-pix"><div class="rc-circ">${ICONE.check}</div><p style="margin:0 0 2px">Pix recebido</p>
+      <div class="rc-valor">${brl(valor)}</div><p>Caiu na sua conta agora${chave ? ` · chave ${esc(chave)}` : ""}.</p></div>
+      <button class="rc-bt" data-fechar>Ver meu contrato</button>`);
+  }
+
+  // ---------- ajuda e especialista ----------
+  const FAQ = {
+    geral: [["O que é o CET?", "Custo efetivo total: junta juros, IOF e outros custos num número só, para comparar ofertas de verdade."],
+      ["Posso quitar antes?", "Pode, a qualquer momento, com desconto dos juros futuros. Também dá para adiantar só algumas parcelas."],
+      ["Posso desistir?", "Sim. Até 7 dias depois da contratação, devolvendo o valor recebido, sem juros."]],
+    2: [["Por que a taxa pode mudar?", "A taxa da simulação é de referência. A análise considera seu histórico e pode até baixar a taxa."]],
+    4: [["Quanto tempo leva a análise?", "Normalmente segundos. Se o birô de crédito estiver lento, seu pedido fica guardado e segue sozinho."]],
+    5: [["Por que recebi outro valor?", "A parcela precisa caber em até 30% da sua renda e no limite do seu perfil. Por isso oferecemos um valor que você consegue pagar com tranquilidade."],
+      ["Não fui aprovado. E agora?", "Não é definitivo. Um especialista pode olhar seu caso com você e indicar o melhor caminho."]],
+  };
+  /** Ajuda contextual + falar com especialista (chat, ligação). Banco real: trocar pelo atendimento próprio. */
+  function ajuda({ dentro, etapa, nome, assunto, abrir } = {}) {
+    const perguntas = [...(FAQ[etapa] || []), ...FAQ.geral];
+    return folha(dentro, `<h3>${assunto ? "Fale com um especialista" : "Como podemos ajudar?"}</h3>
+      ${assunto ? `<p>${esc(assunto)}</p>` : `<div class="rc-faq">${perguntas.map(([q, r]) => `<details><summary>${esc(q)}</summary><p>${esc(r)}</p></details>`).join("")}</div>`}
+      <div class="rc-lista" style="margin-top:12px">
+        <button class="rc-op" id="rc-chat"><i style="background:var(--roxo,#5b2be0)">💬</i><div><b>Conversar agora</b><span>Especialista responde em poucos minutos</span></div></button>
+        <button class="rc-op" id="rc-liga"><i style="background:#16b67f">📞</i><div><b>Ligamos para você</b><span>Escolha o melhor horário</span></div></button>
+      </div><button class="rc-tx" data-fechar>Fechar</button>`, (el, fechar) => {
+      const chat = () => {
+        el.innerHTML = `<h3>Especialista em crédito</h3><div class="rc-chat" id="rc-msgs"></div>
+          <form class="rc-digita" id="rc-f"><input id="rc-in" placeholder="Escreva sua dúvida" autocomplete="off"><button>Enviar</button></form><button class="rc-tx" data-x>Fechar conversa</button>`;
+        const msgs = el.querySelector("#rc-msgs");
+        const fala = (quem, txt) => { msgs.insertAdjacentHTML("beforeend", `<div class="rc-msg ${quem}">${quem === "ela" ? "<small>Ana · especialista</small>" : ""}${esc(txt)}</div>`); msgs.scrollTop = msgs.scrollHeight; };
+        el.querySelector("[data-x]").onclick = () => fechar({ canal: "chat" });
+        setTimeout(() => fala("ela", `Olá${nome ? ", " + String(nome).split(" ")[0] : ""}! Sou a Ana. ${assunto ? "Vi o resultado do seu pedido e posso te ajudar a encontrar o melhor caminho." : "Em que posso ajudar?"}`), 400);
+        el.querySelector("#rc-f").onsubmit = (e) => {
+          e.preventDefault(); const t = el.querySelector("#rc-in").value.trim(); if (!t) return;
+          fala("eu", t); el.querySelector("#rc-in").value = "";
+          setTimeout(() => fala("ela", "Entendi. Vou olhar seu cadastro com calma e te respondo por aqui ou no seu celular em até 1 dia útil. Pode fechar o app tranquilo."), 1100);
+        };
+        el.querySelector("#rc-in").focus();
+      };
+      const liga = () => {
+        el.innerHTML = `<h3>Quando podemos ligar?</h3><p>Um especialista liga para o celular do seu cadastro.</p>
+          <div class="rc-chips" id="rc-h">${["Hoje, 14h–16h", "Hoje, 16h–18h", "Amanhã, 9h–12h", "Amanhã, 14h–18h"].map((h) => `<button data-h="${h}">${h}</button>`).join("")}</div>
+          <button class="rc-bt" id="rc-ok" disabled>Agendar ligação</button><button class="rc-tx" data-fechar>Voltar</button>`;
+        let h = null;
+        el.querySelectorAll("[data-h]").forEach((b) => b.onclick = () => { h = b.dataset.h; el.querySelectorAll("[data-h]").forEach((x) => x.classList.toggle("sel", x === b)); el.querySelector("#rc-ok").disabled = false; });
+        el.querySelector("[data-fechar]").onclick = () => fechar(null);
+        el.querySelector("#rc-ok").onclick = () => fechar({ canal: "ligacao", horario: h });
+      };
+      el.querySelector("#rc-chat").onclick = chat; el.querySelector("#rc-liga").onclick = liga;
+      if (abrir === "chat") chat();
+    });
+  }
+
+  // ---------- lembretes de vencimento ----------
+  function lembretes({ dentro, atual } = {}) {
+    const a = Object.assign({ ativo: true, dias: 3, push: true, email: false, sms: false }, atual || {});
+    return folha(dentro, `<h3>Lembretes de vencimento</h3><p>Avisamos antes de cada parcela vencer, para você não pagar atraso.</p>
+      <label class="rc-sw"><div><b>Lembrar antes do vencimento</b></div><input type="checkbox" id="rc-at" ${a.ativo ? "checked" : ""}></label>
+      <div style="font-size:12.5px;color:var(--muted,#6b6584);font-weight:700;margin-top:8px">Quantos dias antes?</div>
+      <div class="rc-chips" id="rc-d">${[1, 3, 5].map((d) => `<button data-d="${d}" class="${d === a.dias ? "sel" : ""}">${d} dia${d > 1 ? "s" : ""}</button>`).join("")}</div>
+      <label class="rc-sw"><div><b>Notificação no celular</b></div><input type="checkbox" id="rc-push" ${a.push ? "checked" : ""}></label>
+      <label class="rc-sw"><div><b>E-mail</b></div><input type="checkbox" id="rc-email" ${a.email ? "checked" : ""}></label>
+      <label class="rc-sw"><div><b>SMS</b></div><input type="checkbox" id="rc-sms" ${a.sms ? "checked" : ""}></label>
+      <button class="rc-bt" id="rc-ok">Salvar</button>`, (el, fechar) => {
+      el.querySelectorAll("[data-d]").forEach((b) => b.onclick = () => { a.dias = Number(b.dataset.d); el.querySelectorAll("[data-d]").forEach((x) => x.classList.toggle("sel", x === b)); });
+      el.querySelector("#rc-ok").onclick = async () => {
+        const r = { ativo: el.querySelector("#rc-at").checked, dias: a.dias, push: el.querySelector("#rc-push").checked, email: el.querySelector("#rc-email").checked, sms: el.querySelector("#rc-sms").checked };
+        if (r.ativo && r.push && window.Notification && Notification.permission === "default") { try { await Notification.requestPermission(); } catch {} }
+        fechar(r);
+      };
+    });
+  }
+
+  // ---------- aparência ----------
+  /** Tema: "auto" segue o modo claro/escuro do celular (padrão); "claro"/"escuro" fixam. Texto maior à parte. */
+  function aparencia({ dentro, atual } = {}) {
+    const a = Object.assign({ tema: "auto", grande: false }, atual || {});
+    return folha(dentro, `<h3>Aparência</h3><p>Por padrão, o app segue o modo claro ou escuro do seu celular.</p>
+      <div class="rc-chips" id="rc-tema">${[["auto", "Igual ao celular"], ["claro", "Claro"], ["escuro", "Escuro"]].map(([v, n]) => `<button data-t="${v}" class="${a.tema === v ? "sel" : ""}">${n}</button>`).join("")}</div>
+      <label class="rc-sw"><div><b>Texto maior</b><span>Letras e botões maiores</span></div><input type="checkbox" id="rc-gr" ${a.grande ? "checked" : ""}></label>
+      <button class="rc-bt" id="rc-ok">Pronto</button>`, (el, fechar) => {
+      el.querySelectorAll("[data-t]").forEach((b) => b.onclick = () => { a.tema = b.dataset.t; el.querySelectorAll("[data-t]").forEach((x) => x.classList.toggle("sel", x === b)); });
+      el.querySelector("#rc-ok").onclick = () => fechar({ tema: a.tema, grande: el.querySelector("#rc-gr").checked });
+    });
+  }
+
+  // ---------- adiantar parcelas ----------
+  /** Valor presente das últimas N parcelas (desconto dos juros, CDC art. 52 §2º), como a quitação da API. */
+  function valorAntecipado(parcelas, taxaMensal, n) {
+    const i = Number(taxaMensal) / 100, hoje = Date.now(), ult = parcelas.slice(-n);
+    let nominal = 0, presente = 0;
+    for (const p of ult) {
+      const meses = Math.max(0, (Date.parse(p.vencimento + "T12:00:00") - hoje) / (30 * 864e5));
+      nominal += Number(p.valor); presente += Number(p.valor) / Math.pow(1 + i, meses);
+    }
+    return { quantidade: n, nominal: Math.round(nominal * 100) / 100, valor: Math.round(presente * 100) / 100, desconto: Math.round((nominal - presente) * 100) / 100 };
+  }
+  function antecipar({ dentro, parcelas, taxaMensal } = {}) {
+    const max = Math.max(1, parcelas.length - 1);
+    return folha(dentro, `<h3>Adiantar parcelas</h3><p>Pague as últimas parcelas agora e economize os juros delas. O contrato termina antes.</p>
+      <div style="font-weight:800" id="rc-n"></div><input type="range" class="rc-faixa" id="rc-r" min="1" max="${max}" value="${Math.min(3, max)}">
+      <dl class="rc-linhas" id="rc-res"></dl>
+      <button class="rc-bt" id="rc-ok">Adiantar com Pix</button><button class="rc-tx" data-fechar>Agora não</button>`, (el, fechar) => {
+      const r = el.querySelector("#rc-r");
+      const mostrar = () => {
+        const v = valorAntecipado(parcelas, taxaMensal, Number(r.value));
+        el.querySelector("#rc-n").textContent = `${v.quantidade} parcela${v.quantidade > 1 ? "s" : ""} (as últimas)`;
+        el.querySelector("#rc-res").innerHTML = `<dt>Valor das parcelas</dt><dd>${brl(v.nominal)}</dd><dt>Você paga hoje</dt><dd>${brl(v.valor)}</dd><dt>Economia de juros</dt><dd class="rc-forte">${brl(v.desconto)}</dd>`;
+        return v;
+      };
+      r.oninput = mostrar; mostrar();
+      el.querySelector("#rc-ok").onclick = () => fechar(mostrar());
+    });
+  }
+
+  window.Recursos = {
+    PADRAO,
+    /** Aplica o painel vindo da API (GET /v1/recursos); o que não vier fica no padrão. */
+    definir(p) { painel = Object.assign({}, PADRAO, p || {}); painel.app = Object.assign({}, PADRAO.app, (p || {}).app || {}); return painel; },
+    get painel() { return painel; },
+    ligado, folha, valorAntecipado,
+    provaDeVida, openFinance, pix, ajuda, lembretes, aparencia, antecipar,
+  };
+})();
+
+</script>
+<script>
+"use strict";
+const $ = (s) => document.querySelector(s);
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const brl = (v) => Number(v).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+const pct = (v) => Number(v).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + "%";
+const dataBr = (d) => new Date(String(d).length === 10 ? d + "T12:00:00" : d).toLocaleDateString("pt-BR");
+const dataHora = (d) => new Date(d).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" });
+const cpfFmt = (c) => c.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
+const numero = (txt) => Number(String(txt).replace(/[^\d,]/g, "").replace(",", ".")) || 0;
+const espera = (ms) => new Promise((r) => setTimeout(r, ms));
+const guardar = {
+  // memória da jornada: só enquanto o app está aberto (a aparência escolhida fica no aparelho)
+  arm: (k) => (k === "v2-aparencia" ? localStorage : sessionStorage),
+  ler(k, padrao) { try { const v = this.arm(k).getItem(k); return v ? JSON.parse(v) : padrao; } catch { return padrao; } },
+  gravar(k, v) { try { this.arm(k).setItem(k, JSON.stringify(v)); } catch {} },
+  apagar(k) { try { this.arm(k).removeItem(k); } catch {} },
+};
+const IC = {
+  dinheiro: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>',
+  calendario: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>',
+  relogio: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
+  raio: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L4 14h7l-1 8 9-12h-7z"/></svg>',
+  check: '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
+  cadeado: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>',
+  info: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg>',
+  seta: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>',
+};
+
+// contas de demonstração: os CPFs dos cenários do desafio
+const CONTAS = [
+  { cpf: "12345685000", nome: "Carlos Lima", nasc: "1988-03-12", renda: 10000, valor: 20000, prazo: 24 },
+  { cpf: "45678960091", nome: "Juliana Prado", nasc: "1992-07-21", renda: 2500, valor: 20000, prazo: 24 },
+  { cpf: "32165415098", nome: "Roberto Alves", nasc: "1979-11-02", renda: 4000, valor: 5000, prazo: 12 },
+  { cpf: "74185276087", nome: "Fernanda Costa", nasc: "1990-01-15", renda: 6000, valor: 15000, prazo: 48 },
+  { cpf: "98765440048", nome: "Marcos Ribeiro", nasc: "1985-09-30", renda: 3000, valor: 10000, prazo: 12 },
+  { cpf: "01234572036", nome: "Patrícia Nunes", nasc: "1983-04-08", renda: 8000, valor: 5000, prazo: 12 },
+];
+const ETAPAS = ["Cadastro", "Simulação", "Solicitação", "Análise", "Resultado", "Aceite", "Contratação", "Notificações"];
+const NOMES = { EM_ANALISE: ["Em análise", ""], APROVADA: ["Aprovada", "ok"], CONTRAPROPOSTA: ["Contraproposta", "warn"], REPROVADA: ["Não aprovada", "bad"],
+  ACEITA: ["Aceita", "ok"], CONTRATADA: ["Contratada", "ok"], RECUSADA: ["Recusada", "cinza"], CANCELADA: ["Cancelada", "cinza"], EXPIRADA: ["Expirada", "cinza"] };
+const DECIDIDA = ["APROVADA", "CONTRAPROPOSTA", "REPROVADA", "ACEITA", "CONTRATADA", "RECUSADA", "EXPIRADA"];
+const FINAL = ["CONTRATADA", "REPROVADA", "RECUSADA", "CANCELADA", "EXPIRADA"];
+
+// sessão: quem entrou. jornada: as escolhas de cada cliente, guardadas no aparelho
+let sessao = guardar.ler("v2-sessao", null);
+let J = null, cliente = null, sim = null, prop = null;
+let tela = "inicio";
+let fluxo = null;
+let progresso = { bureau: "", oferta: false };
+const chaveJ = (cpf) => "v2-jornada-" + cpf;
+const contaDe = (cpf) => CONTAS.find((c) => c.cpf === cpf) || {};
+const novaJornada = (conta) => ({ valor: conta?.valor || 10000, prazo: conta?.prazo || 24, rascunho: null, simId: null, propostaId: null,
+  consentimento: false, aceiteMarcado: false, chaveEnvio: null, chaveAceite: null, chaveCadastro: null, passo: 1, vistas: [], aceite: null,
+  diaVencimento: null, carencia: 30, finalidade: null, pixVisto: false });
+// recursos opcionais: o painel vem da API; cada um some da tela quando o banco desliga
+const R = (nome) => window.Recursos.ligado(nome);
+let oferta = null;   // pré-aprovado do cliente (quando o recurso está ligado)
+const porCliente = (k) => sessao ? guardar.ler(`v2-${k}-${sessao.cpf}`, null) : null;
+const gravarCliente = (k, v) => { if (sessao) guardar.gravar(`v2-${k}-${sessao.cpf}`, v); };
+// aparência: por padrão segue o modo claro/escuro do celular; o cliente pode fixar um dos dois
+let aparencia = guardar.ler("v2-aparencia", { tema: "auto", grande: false });
+if (aparencia.tema === undefined) aparencia.tema = aparencia.escuro ? "escuro" : "auto";
+const sistemaEscuro = window.matchMedia ? matchMedia("(prefers-color-scheme: dark)") : null;
+function aplicarAparencia() {
+  const ok = R("tema-escuro");
+  aparencia.escuro = aparencia.tema === "escuro" || (aparencia.tema === "auto" && !!sistemaEscuro?.matches);
+  $("#app").classList.toggle("tema-escuro", ok && aparencia.escuro);
+  $("#app").classList.toggle("texto-grande", ok && aparencia.grande);
+  document.querySelector('meta[name="theme-color"]').content = ok && aparencia.escuro ? "#130f20" : "#5b2be0";
+}
+// primeira parcela: 30 dias, ou o primeiro dia escolhido a partir daí (mesma regra do contrato)
+// 1ª parcela em 60/90 dias: os juros dos dias a mais entram na parcela (mesma conta da API), salvo se o banco absorve
+const extraCarencia = (c) => c > 30 && Recursos.painel.vencimento?.incorporarJurosCarencia !== false ? c - 30 : 0;
+const parcelaComCarencia = (valor, taxa, prazo, c) => window.__demo.condicoes(Math.round(Number(valor) * 100), Number(taxa), prazo, extraCarencia(c)).parcela;
+const carencias = () => (R("vencimento") && Recursos.painel.vencimento?.carencias) || [30];
+function primeiraParcela(dia, carencia) {
+  const base = new Date(); base.setHours(12, 0, 0, 0); base.setDate(base.getDate() + Math.max(30, carencia || 30));
+  if (!dia) return base;
+  const d = new Date(base); d.setDate(dia); if (d < base) d.setMonth(d.getMonth() + 1);
+  return d;
+}
+sistemaEscuro?.addEventListener?.("change", () => aplicarAparencia());
+const CASOS = [
+  { cpf: "12345685000", rot: "Aprovado", desc: "Pede R$ 20 mil e recebe taxa menor", cls: "c-ok", ic: "✓" },
+  { cpf: "45678960091", rot: "Contraproposta", desc: "Pede R$ 20 mil; a renda comporta menos", cls: "c-warn", ic: "≈" },
+  { cpf: "32165415098", rot: "Não aprovado", desc: "Pede R$ 5 mil e recebe orientação", cls: "c-bad", ic: "→" },
+];
+const salvarJ = () => { if (sessao && J) guardar.gravar(chaveJ(sessao.cpf), J); };
+const vitrine = guardar.ler("v2-vitrine", { valor: 10000 });
+
+async function api(caminho, { metodo = "GET", corpo, chave } = {}) {
+  const h = { Accept: "application/json" };
+  if (sessao) h.Authorization = "Bearer demo:" + sessao.cpf;
+  if (corpo !== undefined) h["Content-Type"] = "application/json";
+  if (chave) h["Idempotency-Key"] = chave;
+  let r;
+  try { r = await fetch("/v1" + caminho, { method: metodo, headers: h, body: corpo === undefined ? undefined : JSON.stringify(corpo) }); }
+  catch { throw new Error("Sem conexão. Confira a internet e tente de novo."); }
+  const dados = await r.json().catch(() => null);
+  if (!r.ok) { const e = new Error((dados?.title || "Algo deu errado") + (dados?.acao ? ". " + dados.acao : "")); e.status = r.status; e.codigo = dados?.codigo; throw e; }
+  return dados;
+}
+
+// etapas liberadas: saem dos dados (cadastro, simulação, status do pedido), nunca de um contador
+function liberadas() {
+  const s = prop?.status, ok = new Set();
+  if (!sessao) return ok;
+  ok.add(1);
+  if (cliente) ok.add(2);
+  if (cliente && sim) ok.add(3);
+  if (prop) ok.add(4);
+  if (prop && DECIDIDA.includes(s)) ok.add(5);
+  if (prop && ["APROVADA", "CONTRAPROPOSTA", "ACEITA", "CONTRATADA"].includes(s)) ok.add(6);
+  if (prop && (s === "ACEITA" || s === "CONTRATADA")) ok.add(7);
+  if (prop && FINAL.includes(s)) ok.add(8);
+  return ok;
+}
+function naoSeAplica() {
+  const s = prop?.status, na = new Set();
+  if (["REPROVADA", "CANCELADA", "RECUSADA", "EXPIRADA"].includes(s)) { na.add(6); na.add(7); }
+  if (s === "CANCELADA") na.add(5);
+  return na;
+}
+function desenharEtapas() {
+  const nav = $("#etapas");
+  nav.classList.remove("oculto");
+  // fora das etapas (capa, login): a trilha continua visível, para o cliente ver quanto falta
+  const foraDasEtapas = typeof tela !== "number";
+  const ok = liberadas(), na = naoSeAplica(), ultimo = ok.size ? Math.max(...ok) : 0;
+  const acabou = FINAL.includes(prop?.status);
+  $("#trilho").innerHTML = ETAPAS.map((n, i) => {
+    const k = i + 1;
+    const cls = k === tela ? "atual" : na.has(k) ? "na" : ok.has(k) && (k < ultimo || (acabou && (J?.vistas || []).includes(k))) ? "feita" : ok.has(k) ? "livre" : "";
+    const pode = ok.has(k) && !na.has(k);
+    return `<button class="${cls}" data-k="${k}" title="${n}" aria-label="Etapa ${k}: ${n}"${pode ? "" : " aria-disabled=\"true\""}><b>${cls === "feita" ? "✓" : cls === "na" ? "–" : k}</b></button>`;
+  }).join("");
+  $("#trilho").querySelectorAll("button").forEach((b) => b.onclick = () => {
+    const k = Number(b.dataset.k);
+    if (k === tela) return;
+    if (na.has(k)) return avisar(`${ETAPAS[k - 1]} não se aplica a este pedido.`);
+    if (!sessao) return avisar("Entre na sua conta para começar pela etapa 1, Cadastro.");
+    if (!ok.has(k)) {
+      const falta = [1, 2, 3, 4, 5, 6, 7, 8].find((x) => !ok.has(x) && !na.has(x));
+      return avisar(falta < k ? `Conclua a etapa ${falta}, ${ETAPAS[falta - 1]}, antes de seguir.` : "Esta etapa ainda não foi liberada.");
+    }
+    ir(k);
+  });
+  $("#etapa-ant").hidden = foraDasEtapas;
+  $("#recomecar").hidden = foraDasEtapas && !sessao;
+  $("#etapas .navega span").textContent = foraDasEtapas ? (sessao ? "toque num número para ir à etapa" : "") : "toque nos números para voltar";
+  if (foraDasEtapas) {
+    const parou = sessao && ok.size ? Math.max(...[...ok].filter((x) => !na.has(x))) : 0;
+    $("#onde-nome").textContent = parou ? `Próxima etapa do seu pedido: ${parou} de 8 · ${ETAPAS[parou - 1]}` : "8 etapas até o contrato";
+    $("#onde-prox").textContent = parou ? "" : "1ª: Cadastro";
+    $("#recomecar").onclick = recomecar;
+    return;
+  }
+  const prox = [1, 2, 3, 4, 5, 6, 7, 8].find((x) => x > tela && !na.has(x));
+  $("#onde-nome").textContent = `Etapa ${tela} de 8 · ${ETAPAS[tela - 1]}`;
+  $("#onde-prox").textContent = prox ? `Próxima: ${ETAPAS[prox - 1]}` : "Última etapa";
+  $("#etapa-ant").textContent = tela === 1 ? "‹ Início" : "‹ Etapa anterior";
+  $("#etapa-ant").onclick = () => ir(tela === 1 ? "inicio" : [7, 6, 5, 4, 3, 2, 1].find((x) => x < tela && !na.has(x)));
+  $("#recomecar").onclick = recomecar;
+  if (tela === 2 && !guardar.ler("v2-dica", false)) { guardar.gravar("v2-dica", true); setTimeout(() => avisar("Dica: toque nos números das etapas para voltar a qualquer uma, sem perder o que já fez."), 600); }
+}
+
+function montar(html, rodape = "", voltar = null) {
+  $("#corpo").innerHTML = html;
+  $("#rodape").innerHTML = rodape;
+  $("#corpo").scrollTop = 0;
+  const hero = $("#corpo .hero"), cab = $("#cabeca");
+  $("#app").classList.toggle("escuro", !!hero);
+  cab.style.background = "";
+  if (hero) hero.style.background = "";
+  const v = $("#voltar"); v.classList.toggle("oculto", !voltar); v.onclick = voltar;
+  $("#avatar").textContent = sessao ? (sessao.nome || "?").split(" ").map((x) => x[0]).slice(0, 2).join("") : "☰";
+  $("#ajuda").hidden = !R("ajuda") || tela === "login";
+  desenharEtapas();
+  // o topo e o destaque da tela formam um só bloco de cor
+  if (hero) {
+    const total = cab.offsetHeight + hero.offsetHeight, img = getComputedStyle(hero).backgroundImage;
+    cab.style.background = `${img} top / 100% ${total}px no-repeat`;
+    hero.style.background = `${img} bottom / 100% ${total}px no-repeat`;
+  }
+}
+let tToast;
+function avisar(msg) { const t = $("#toast"); t.textContent = msg; t.classList.add("ver"); clearTimeout(tToast); tToast = setTimeout(() => t.classList.remove("ver"), 3200); }
+function folha(html) {
+  $("#folha").innerHTML = html; $("#veu").classList.add("aberto");
+  return new Promise((ok) => {
+    const fechar = (v) => { $("#veu").classList.remove("aberto"); ok(v); };
+    $("#veu").onclick = (e) => { if (e.target.id === "veu") fechar(null); };
+    $("#folha").querySelectorAll("[data-v]").forEach((b) => b.onclick = () => fechar(b.dataset.v));
+  });
+}
+const confirmar = (titulo, texto, rotulo) => folha(`<h3>${titulo}</h3><p>${texto}</p>
+  <button class="primario" data-v="sim" style="background:var(--bad);box-shadow:none">${rotulo}</button><button class="texto" data-v="nao">Voltar</button>`).then((v) => v === "sim");
+const aviso = (tipo, texto) => `<div class="aviso ${tipo}">${IC.info}<span>${texto}</span></div>`;
+const travado = () => !!prop;   // depois do envio, os dados e a simulação deste pedido não mudam mais
+const numeroPedido = (p) => p.id.toUpperCase().replace("PROP-", "PRP-");
+
+async function ir(destino) {
+  if (typeof destino === "number" && J) { J.passo = destino; J.vistas = [...new Set([...(J.vistas || []), destino])]; salvarJ(); }
+  tela = destino;
+  const T = { inicio: telaInicio, login: telaLogin, 1: telaCadastro, 2: telaSimulacao, 3: telaRevisao, 4: telaAnalise, 5: telaResultado, 6: telaAceite, 7: telaContrato, 8: telaNotificacoes };
+  try { await T[destino](); } catch (e) { avisar(e.message); }
+}
+const anterior = (k) => () => ir(k === 1 ? "inicio" : k - 1);
+const ondeParou = () => Math.min(J?.passo || 1, Math.max(...liberadas()));
+
+// ---------- início ----------
+async function telaInicio() {
+  const nome = sessao ? sessao.nome.split(" ")[0] : "";
+  let bloco = "";
+  if (sessao && cliente) {
+    let pedidos = [];
+    try { pedidos = (await api(`/propostas?clienteId=${cliente.id}&tamanho=10`)).dados; } catch {}
+    if (tela !== "inicio") return;
+    const ativo = prop && !FINAL.includes(prop.status), k = ondeParou();
+    // gancho comercial: o pré-aprovado aparece primeiro quando não há pedido em andamento
+    if (!ativo && oferta?.disponivel) bloco += `<button class="pre" id="pre"><small>PRÉ-APROVADO PARA VOCÊ</small><b>até ${brl(oferta.valor)}</b>
+      <span>Em ${oferta.prazo}× de ${brl(oferta.parcela)} · sujeito à análise · válido até ${dataBr(oferta.validaAte)}</span><br><u>Usar meu pré-aprovado</u></button>`;
+    bloco += ativo || (!prop && k > 1)
+      ? `<button class="continuar" id="continuar"${!ativo && oferta?.disponivel ? ' style="margin-top:0"' : ""}><span class="ic">${IC.seta}</span><div><b>${ativo ? "Continuar seu pedido" : "Continuar de onde parou"}</b><span>Etapa ${k} de 8 · ${ETAPAS[k - 1]}${sim && !prop ? ` · ${brl(sim.valor)} em ${sim.prazo}×` : ""}</span></div><em>›</em></button>`
+      : `<button class="continuar" id="novo"${oferta?.disponivel ? ' style="margin-top:0"' : ""}><span class="ic">${IC.dinheiro}</span><div><b>Novo empréstimo</b><span>Simule em minutos, sem compromisso</span></div><em>›</em></button>`;
+    if (pedidos.length) bloco += `<div class="card"><div class="rot" style="margin-bottom:4px">Seus pedidos</div>${pedidos.map((p) => {
+      const c = p.condicoesFinais, [n, t] = NOMES[p.status] || [p.status, ""];
+      return `<div class="pedido"><div><b>${brl(c?.valor ?? p.valorSolicitado)} em ${c?.prazo ?? p.prazo}×</b><span>${numeroPedido(p)} · ${dataBr(p.criadaEm)}</span></div><span class="tag ${t}">${n}</span></div>`;
+    }).join("")}</div>`;
+  } else {
+    bloco += `<div class="card flutua"><div class="rot">Quanto você precisa?</div>
+      <div class="grande" id="vi-valor">${brl(vitrine.valor)}</div>
+      <input type="range" id="vi-faixa" min="1000" max="100000" step="500" value="${vitrine.valor}" aria-label="Valor">
+      <div class="limites"><span>R$ 1 mil</span><span>R$ 100 mil</span></div>
+      <p style="margin:10px 0 0;font-size:13.5px" id="vi-parcela">&nbsp;</p></div>
+      ${sessao ? "" : `<div class="rot" style="margin:4px 0 6px">Experimente com um perfil</div><div class="casos" id="casos">${CASOS.map((c) => {
+        const conta = contaDe(c.cpf);
+        return `<button data-cpf="${c.cpf}" class="${c.cls}"><i>${c.ic}</i><div><b>${c.rot} · ${conta.nome.split(" ")[0]}</b><span>${c.desc}</span></div><em>›</em></button>`; }).join("")}</div>`}`;
+  }
+  bloco += `<div class="destaques">
+    <div class="destaque"><span class="ic">${IC.dinheiro}</span><div><b id="cap-valores">De R$ 1 mil a R$ 100 mil</b><span>Você vê na hora quanto cai na conta</span></div></div>
+    <div class="destaque"><span class="ic">${IC.calendario}</span><div><b id="cap-prazos">De 6 a 48 parcelas</b><span>Parcelas fixas e custo total na tela</span></div></div>
+    <div class="destaque"><span class="ic">${IC.raio}</span><div><b>Resposta em segundos</b><span>Acompanhe a análise ao vivo</span></div></div></div>`;
+  if (sessao) bloco += `<button class="recomeca" id="recomecar-ini">↺ Recomeçar a jornada do zero</button>`;
+  montar(`<div class="hero"><p class="ola">${sessao ? "Olá, " + esc(nome) : "Olá!"}</p><h2>Precisa de um dinheiro extra?</h2><p>Simule o empréstimo pessoal em minutos, sem compromisso.</p></div>${bloco}`,
+    sessao && cliente ? "" : `<button class="primario" id="comecar">${sessao ? "Continuar cadastro" : "Começar"}</button>`);
+  if ($("#recomecar-ini")) $("#recomecar-ini").onclick = recomecar;
+  if ($("#comecar")) $("#comecar").onclick = () => ir(sessao ? 1 : "login");
+  if ($("#continuar")) $("#continuar").onclick = () => ir(ondeParou());
+  if ($("#novo")) $("#novo").onclick = comecarNovo;
+  if ($("#pre")) $("#pre").onclick = () => comecarNovo({ valor: Math.round(Number(oferta.valor)), prazo: oferta.prazo });
+  if ($("#casos")) $("#casos").querySelectorAll("button").forEach((b) => b.onclick = () => entrarComo(b.dataset.cpf, true).catch(() => {}));
+  api("/simulacoes/condicoes").then((c) => {
+    const mil = (v) => "R$ " + (Number(v) / 1000).toLocaleString("pt-BR") + " mil";
+    if ($("#cap-valores")) $("#cap-valores").textContent = `De ${mil(c.valorMinimo)} a ${mil(c.valorMaximo)}`;
+    if ($("#cap-prazos")) $("#cap-prazos").textContent = `De ${c.prazoMinimo} a ${c.prazoMaximo} parcelas`;
+  }).catch(() => {});
+  const faixa = $("#vi-faixa");
+  if (faixa) {
+    let t;
+    const mostrar = () => {
+      $("#vi-valor").textContent = brl(vitrine.valor);
+      clearTimeout(t);
+      t = setTimeout(async () => {
+        try {
+          const ops = await api("/simulacoes/opcoes?valor=" + vitrine.valor), o24 = ops.find((o) => o.prazo === 24), o48 = ops[ops.length - 1];
+          if ($("#vi-parcela")) $("#vi-parcela").innerHTML = `Em 24× de <b>${brl(o24.parcela)}</b>, ou parcelas a partir de <b>${brl(o48.parcela)}</b>`;
+        } catch {}
+      }, 200);
+    };
+    faixa.oninput = () => { vitrine.valor = Number(faixa.value); guardar.gravar("v2-vitrine", vitrine); mostrar(); };
+    mostrar();
+  }
+}
+function comecarNovo(escolha) {
+  if (fluxo) { fluxo.abort(); fluxo = null; }
+  const k = J?.chaveCadastro;
+  J = novaJornada(contaDe(sessao.cpf)); J.chaveCadastro = k; sim = null; prop = null;
+  if (escolha?.valor) { J.valor = escolha.valor; J.prazo = escolha.prazo; }
+  salvarJ();
+  ir(cliente ? 2 : 1);
+}
+
+// ---------- login ----------
+function telaLogin() {
+  const sel = guardar.ler("v2-ultimo-cpf", CONTAS[0].cpf);
+  montar(`<div class="icone-topo">${IC.cadeado}</div><p class="titulo">Entre na sua conta</p><p class="sub">Use seu CPF e a senha do banco.</p>
+    <form id="f-login"><label class="campo">CPF<input id="l-cpf" inputmode="numeric" autocomplete="username" value="${cpfFmt(sel)}"></label>
+    <label class="campo">Senha<input id="l-senha" type="password" autocomplete="current-password" value="senha123"></label><button hidden></button></form>
+    <details class="mais"><summary>Contas de demonstração</summary><div class="contas" id="contas">${CONTAS.map((c) =>
+      `<button type="button" data-cpf="${c.cpf}" class="${c.cpf === sel ? "sel" : ""}"><i>${c.nome.split(" ").map((x) => x[0]).join("")}</i><div><b>${c.nome}</b><span>CPF ${cpfFmt(c.cpf)}</span></div></button>`).join("")}</div>
+      <p class="sub" style="margin-top:10px">Senha de todas: senha123</p></details>`,
+    `<button class="primario" id="entrar">Entrar</button>`, () => ir("inicio"));
+  $("#contas").querySelectorAll("button").forEach((b) => b.onclick = () => {
+    $("#l-cpf").value = cpfFmt(b.dataset.cpf); $("#contas").querySelectorAll("button").forEach((x) => x.classList.toggle("sel", x === b));
+  });
+  $("#f-login").onsubmit = (e) => { e.preventDefault(); $("#entrar").click(); };
+  $("#entrar").onclick = async () => {
+    const cpf = $("#l-cpf").value.replace(/\D/g, "");
+    if (!/^\d{11}$/.test(cpf)) return avisar("Digite o CPF com 11 números.");
+    if ($("#l-senha").value !== "senha123") return avisar("CPF ou senha incorretos.");
+    $("#entrar").disabled = true;
+    await espera(300);
+    try { await entrarComo(cpf); } catch { $("#entrar").disabled = false; }
+  };
+}
+async function entrarComo(cpf, caso = false) {
+  sessao = { cpf, nome: contaDe(cpf).nome || "Cliente" };
+  guardar.gravar("v2-sessao", sessao); guardar.gravar("v2-ultimo-cpf", cpf);
+  try { await carregar(); } catch (e) { avisar(e.message); sessao = null; guardar.apagar("v2-sessao"); throw e; }
+  // perfil escolhido na capa: começa com o valor do caso (para mostrar aprovação, contraproposta ou não aprovação)
+  if (caso && !J.simId && !prop) { J.valor = contaDe(cpf).valor; J.prazo = contaDe(cpf).prazo; salvarJ(); }
+  ir(cliente ? "inicio" : 1);
+}
+async function buscarOferta() {
+  oferta = null;
+  if (!cliente || !R("preAprovado")) return;
+  try { oferta = await api(`/ofertas/pre-aprovada?clienteId=${cliente.id}`); } catch {}
+}
+
+// carrega o cliente e o pedido; a fonte da verdade é sempre a API, o aparelho só lembra as escolhas
+async function carregar() {
+  J = guardar.ler(chaveJ(sessao.cpf), null) || novaJornada(contaDe(sessao.cpf));
+  if (!J.simId && !J.propostaId && !guardar.ler(chaveJ(sessao.cpf), null)) J.valor = vitrine.valor || J.valor;
+  cliente = (await api(`/clientes?cpf=${sessao.cpf}`))[0] || null;
+  if (cliente) { sessao.nome = cliente.nome; guardar.gravar("v2-sessao", sessao); }
+  sim = null; prop = null;
+  if (cliente && J.propostaId) { try { prop = await api(`/propostas/${J.propostaId}`); } catch { J.propostaId = null; } }
+  if (cliente && !prop) {
+    // um pedido em andamento feito em outro aparelho também aparece aqui
+    try { const p = (await api(`/propostas?clienteId=${cliente.id}&tamanho=1`)).dados[0]; if (p && !FINAL.includes(p.status)) { prop = p; J.propostaId = p.id; } } catch {}
+  }
+  await buscarOferta();
+  if (prop) sim = { valor: prop.valorSolicitado, prazo: prop.prazo, parcela: prop.parcelaSimulada, taxaMensal: prop.taxaSimulada };
+  else if (cliente && J.simId) { try { sim = await refazerSimulacao(); } catch {} }
+  salvarJ();
+  if (prop && (prop.status === "EM_ANALISE" || prop.status === "ACEITA")) acompanhar();
+}
+async function refazerSimulacao() {
+  const s = await api("/simulacoes", { metodo: "POST", corpo: { clienteId: cliente.id, valor: J.valor, prazo: J.prazo } });
+  J.simId = s.id; salvarJ(); return s;
+}
+
+// ---------- 1 · cadastro ----------
+function telaCadastro() {
+  const conta = contaDe(sessao.cpf), r = J.rascunho || {};
+  const v = cliente ? { nome: cliente.nome, nasc: cliente.dataNascimento, email: cliente.email, cel: cliente.telefone, renda: cliente.renda }
+    : { nome: r.nome ?? conta.nome ?? "", nasc: r.nasc ?? conta.nasc ?? "",
+        email: r.email ?? (conta.nome ? conta.nome.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(" ", ".") + "@email.com" : ""),
+        cel: r.cel ?? "(11) 98888-" + sessao.cpf.slice(-4), renda: r.renda ?? conta.renda ?? "" };
+  const fixo = travado();
+  montar(`<p class="titulo">Seus dados</p><p class="sub">${cliente ? "Confira e atualize o que mudou. A renda entra no cálculo da sua oferta." : "Leva um minuto. Usamos sua renda para calcular a melhor oferta."}</p>
+    ${fixo ? aviso("info", "Seu pedido já foi enviado com estes dados. Eles ficam fixos neste pedido.") : ""}
+    <form id="f-cad" novalidate>
+    <label class="campo">Nome completo<input name="nome" value="${esc(v.nome)}" ${cliente ? "readonly" : ""} autocomplete="name"></label>
+    <div class="dupla"><label class="campo">CPF<input value="${cpfFmt(sessao.cpf)}" readonly></label>
+    <label class="campo">Nascimento<input name="nasc" type="date" value="${esc(v.nasc)}" ${cliente ? "readonly" : ""}></label></div>
+    <label class="campo">E-mail<input name="email" type="email" value="${esc(v.email)}" ${fixo ? "readonly" : ""} autocomplete="email"></label>
+    <label class="campo">Celular<input name="cel" inputmode="tel" value="${esc(v.cel)}" ${fixo ? "readonly" : ""} autocomplete="tel"></label>
+    <label class="campo">Renda mensal<input name="renda" inputmode="decimal" value="${v.renda !== "" ? brl(v.renda) : ""}" ${fixo ? "readonly" : ""}></label>
+    ${R("open-finance") && !fixo ? (porCliente("open-finance") ? `<div class="selo-of">✓ Renda comprovada via Open Finance · ${esc(porCliente("open-finance").instituicao)}</div>`
+      : `<button type="button" class="opcao" id="of" style="margin:-4px 0 12px"><span class="ic">${IC.raio}</span><div><b>Comprovar renda com Open Finance</b><span>Sem enviar documento. Ajuda a liberar mais.</span></div><em>›</em></button>`) : ""}
+    <button hidden></button></form>`,
+    `<button class="primario" id="seguir">Continuar</button>`, () => ir("inicio"));
+  const f = $("#f-cad");
+  f.oninput = () => { if (!cliente) { const d = Object.fromEntries(new FormData(f)); J.rascunho = { ...d, renda: numero(d.renda) || "" }; salvarJ(); } };
+  f.renda.onblur = () => { const n = numero(f.renda.value); if (n) f.renda.value = brl(n); };
+  if ($("#of")) $("#of").onclick = async () => {
+    const r = await Recursos.openFinance({ dentro: $("#app"), rendaAtual: numero(f.renda.value) || contaDe(sessao.cpf).renda });
+    if (!r) return;
+    gravarCliente("open-finance", r); f.renda.value = brl(r.renda); f.oninput();
+    $("#of").outerHTML = `<div class="selo-of">✓ Renda comprovada via Open Finance · ${esc(r.instituicao)}</div>`;
+    avisar("Renda confirmada. Toque em Continuar para seguir.");
+  };
+  f.onsubmit = (e) => { e.preventDefault(); $("#seguir").click(); };
+  $("#seguir").onclick = async () => {
+    if (fixo) return ir(2);
+    f.querySelectorAll(".campo").forEach((c) => { c.classList.remove("erro"); c.querySelector("small")?.remove(); });
+    const d = Object.fromEntries(new FormData(f)), renda = numero(d.renda), erros = [];
+    if (!cliente && (d.nome || "").trim().split(/\s+/).length < 2) erros.push(["nome", "Informe nome e sobrenome."]);
+    if (!cliente) { const idade = (Date.now() - new Date(d.nasc)) / (365.25 * 864e5); if (!(idade >= 18 && idade < 76)) erros.push(["nasc", "O empréstimo é para quem tem de 18 a 75 anos."]); }
+    if (!/^\S+@\S+\.\S+$/.test(d.email || "")) erros.push(["email", "Confira o e-mail."]);
+    if ((d.cel || "").replace(/\D/g, "").length < 10) erros.push(["cel", "Informe o celular com DDD."]);
+    if (!(renda > 0)) erros.push(["renda", "Informe sua renda mensal."]);
+    if (erros.length) { erros.forEach(([n, m]) => { const c = f[n].closest(".campo"); c.classList.add("erro"); c.insertAdjacentHTML("beforeend", `<small>${m}</small>`); }); return; }
+    $("#seguir").disabled = true;
+    try {
+      if (!cliente) {
+        J.chaveCadastro = J.chaveCadastro || crypto.randomUUID(); salvarJ();
+        cliente = await api("/clientes", { metodo: "POST", chave: J.chaveCadastro, corpo: { nome: d.nome.trim(), cpf: sessao.cpf, dataNascimento: d.nasc, email: d.email, telefone: d.cel, renda } });
+        sessao.nome = cliente.nome; guardar.gravar("v2-sessao", sessao); J.rascunho = null;
+      } else if (Number(cliente.renda) !== renda || cliente.email !== d.email || cliente.telefone !== d.cel) {
+        const mudouRenda = Number(cliente.renda) !== renda;
+        cliente = await api(`/clientes/${cliente.id}`, { metodo: "PATCH", corpo: { renda, email: d.email, telefone: d.cel } });
+        if (mudouRenda) { J.consentimento = false; avisar("Renda atualizada. As próximas etapas já usam o novo valor."); }
+      }
+      await buscarOferta();
+      salvarJ(); ir(2);
+    } catch (e) { avisar(e.message); $("#seguir").disabled = false; }
+  };
+}
+
+// ---------- 2 · simulação ----------
+function telaSimulacao() {
+  const fixo = travado();
+  montar(`<p class="titulo">Simule seu empréstimo</p><p class="sub">Escolha o valor e o número de parcelas.</p>
+    ${fixo ? aviso("info", "Esta é a simulação do pedido que você enviou. Para outro valor, faça um novo pedido depois deste.") : ""}
+    ${!fixo && oferta?.disponivel ? `<div class="aviso ok" id="s-pre">${IC.info}<span>Você tem até <b>${brl(oferta.valor)}</b> pré-aprovados. <button class="link" id="usar-pre">Usar este valor</button></span></div>` : ""}
+    <div class="card"><div class="rot">Quanto você precisa?</div>
+      <div class="valor-in"><span>R$</span><input id="s-valor" inputmode="numeric" value="${Number(J.valor).toLocaleString("pt-BR")}" ${fixo ? "readonly" : ""} aria-label="Valor"></div>
+      <input type="range" id="s-faixa" min="1000" max="100000" step="500" value="${J.valor}" ${fixo ? "disabled" : ""} aria-label="Valor">
+      <div class="limites"><span>R$ 1 mil</span><span>R$ 100 mil</span></div>
+      <div class="rot" style="margin-top:14px">Em quantas parcelas?</div>
+      <div class="prazos" id="s-prazos"></div>
+      ${R("vencimento") ? `<div class="rot" style="margin-top:14px">Melhor dia para pagar</div>
+      <div class="chips" id="s-dias">${Recursos.painel.vencimento.dias.map((d) => `<button data-d="${d}" class="${J.diaVencimento === d ? "sel" : ""}" ${fixo ? "disabled" : ""}>Dia ${d}</button>`).join("")}</div>
+      ${carencias().length > 1 ? `<div class="rot" style="margin-top:12px">Primeira parcela em</div>
+      <div class="chips" id="s-car">${carencias().map((c) => `<button data-c="${c}" class="${(fixo ? prop.carenciaDias || 30 : J.carencia || 30) === c ? "sel" : ""}" ${fixo ? "disabled" : ""}>${c} dias</button>`).join("")}</div>` : ""}
+      <div class="sub" style="margin:4px 0 0;font-size:12px" id="s-1a"></div>` : ""}</div>
+    <div class="card" id="s-res"><div class="carregando">Calculando…</div></div>`,
+    `<button class="primario" id="seguir" disabled>Continuar</button>`, anterior(2));
+  let t, calculando = false, irDepois = false, valido = false;
+  // mudar valor ou prazo vale para as próximas etapas: o resumo e o pedido passam a usar a nova simulação
+  const mudou = () => { J.consentimento = false; J.chaveEnvio = null; salvarJ(); };
+  const calcular = (opcoes) => {
+    clearTimeout(t); calculando = true; valido = false;
+    t = setTimeout(async () => {
+      if (tela !== 2) return;
+      if (J.valor < 1000 || J.valor > 100000) { calculando = irDepois = false; $("#s-res").innerHTML = aviso("bad", "Escolha um valor entre R$ 1.000 e R$ 100.000."); return; }
+      try {
+        const ops = opcoes || fixo ? await api("/simulacoes/opcoes?valor=" + J.valor) : null;
+        if (tela !== 2) return;
+        if (ops && opcoes) {
+          $("#s-prazos").innerHTML = ops.map((o) => `<button data-p="${o.prazo}" class="${o.prazo === J.prazo ? "sel" : ""}" ${fixo ? "disabled" : ""}>${o.prazo}×<small>${brl(o.parcela).replace("R$", "").trim()}</small></button>`).join("");
+          $("#s-prazos").querySelectorAll("button").forEach((b) => b.onclick = () => { J.prazo = Number(b.dataset.p); $("#s-prazos").querySelectorAll("button").forEach((x) => x.classList.toggle("sel", x === b)); mudou(); calcular(false); });
+        }
+        let s;
+        if (fixo) s = { ...ops.find((o) => o.prazo === J.prazo), taxaMensal: prop.taxaSimulada, parcela: prop.parcelaSimulada };
+        else {
+          // a simulação só é refeita quando algo mudou; voltar a esta tela não cria outra
+          if (!sim || !sim.id || Number(sim.valor) !== J.valor || sim.prazo !== J.prazo || Date.parse(sim.validaAte) < Date.now()) sim = await refazerSimulacao();
+          s = sim;
+        }
+        if (tela !== 2) return;
+        const parte = Number(s.parcela) / Number(cliente.renda) * 100, bom = parte <= 30, pp = parte.toLocaleString("pt-BR", { maximumFractionDigits: 0 });
+        $("#s-res").innerHTML = `<div class="rot">Parcela estimada</div><div class="grande">${s.prazo}× de ${brl(s.parcela)}</div>
+          <dl class="linhas"><dt>Cai na sua conta</dt><dd class="forte">${brl(s.valorLiberado)}</dd><dt>IOF (imposto)</dt><dd>${brl(s.iof)}</dd>
+          <dt>Taxa de referência</dt><dd>${pct(s.taxaMensal)} a.m.</dd><dt>Custo efetivo total</dt><dd>${pct(s.cetAnual)} a.a.</dd>
+          <dt>Total a pagar</dt><dd>${brl(s.totalPagar)}</dd>${s.validaAte ? `<dt>Simulação válida até</dt><dd>${dataBr(s.validaAte)}</dd>` : ""}</dl>
+          <div class="medidor ${bom ? "bom" : "alto"}"><i>${bom ? "✓" : "!"}</i><div>${bom ? `A parcela usa ${pp}% da sua renda: cabe no bolso.`
+            : `A parcela usa ${pp}% da sua renda, acima dos 30% permitidos. A análise pode oferecer um valor menor; um prazo maior ajuda.`}
+            <div class="faixa"><span style="width:${Math.min(100, parte / 0.6)}%;background:${bom ? "var(--ok)" : "var(--warn)"}"></span></div></div></div>
+          ${s.cronograma ? `<details class="mais" style="margin-top:12px"><summary>Ver as ${s.prazo} parcelas</summary>${s.cronograma.map((p) => `<div class="parcela"><div>${p.numero}ª parcela<span>juros ${brl(p.juros)} · amortização ${brl(p.amortizacao)}</span></div><b>${brl(p.valor)}</b></div>`).join("")}</details>` : ""}
+          ${oferta?.disponivel && J.valor > Number(oferta.valor) && !fixo ? `<p class="sub" style="margin:10px 0 0;font-size:12.5px;color:var(--warn)">Acima do seu pré-aprovado (${brl(oferta.valor)}). Você pode pedir, e a análise pode sugerir outro valor.</p>` : ""}
+          <p class="sub" style="margin:10px 0 0;font-size:12px">A taxa final depende da análise de crédito.</p>`;
+        calculando = false; valido = true; $("#seguir").disabled = false; dia1();
+        // tocou em Continuar enquanto a conta terminava: segue assim que ela fica pronta
+        if (irDepois) { irDepois = false; ir(3); }
+      } catch (e) { calculando = irDepois = false; $("#s-res").innerHTML = aviso("bad", esc(e.message)); }
+    }, 300);
+  };
+  if (!fixo) {
+    $("#s-faixa").oninput = (e) => { J.valor = Number(e.target.value); $("#s-valor").value = J.valor.toLocaleString("pt-BR"); mudou(); calcular(true); };
+    $("#s-valor").onchange = (e) => {
+      const novo = Math.round(numero(e.target.value)); e.target.value = novo.toLocaleString("pt-BR");
+      if (novo === J.valor) return;
+      J.valor = novo; $("#s-faixa").value = J.valor; mudou(); calcular(true);
+    };
+    $("#s-valor").onkeydown = (e) => { if (e.key === "Enter") e.target.blur(); };
+  }
+  $("#seguir").onclick = () => { if (calculando) { irDepois = true; return; } if (valido) ir(3); };
+  // dia de vencimento: escolha do cliente, vale para o pedido e para o contrato
+  const dia1 = () => {
+    if (!$("#s-1a")) return;
+    const dia = fixo ? prop.diaVencimento : J.diaVencimento, car = (fixo ? prop.carenciaDias : J.carencia) || 30;
+    let txt = `1ª parcela em ${primeiraParcela(dia, car).toLocaleDateString("pt-BR")}${dia || car > 30 ? "." : " (30 dias). Escolha um dia, se preferir."}`;
+    if (car > 30 && sim?.id) txt += extraCarencia(car) ? ` Com ${car} dias para começar, a parcela fica em ${brl(parcelaComCarencia(sim.valor, sim.taxaMensal, sim.prazo, car))} (juros dos dias a mais).`
+      : ` O banco não cobra os juros dos dias a mais.`;
+    $("#s-1a").textContent = txt;
+  };
+  if ($("#s-car") && !fixo) $("#s-car").querySelectorAll("button").forEach((b) => b.onclick = () => {
+    J.carencia = Number(b.dataset.c); salvarJ();
+    $("#s-car").querySelectorAll("button").forEach((x) => x.classList.toggle("sel", Number(x.dataset.c) === J.carencia)); dia1();
+  });
+  if ($("#s-dias") && !fixo) $("#s-dias").querySelectorAll("button").forEach((b) => b.onclick = () => {
+    const d = Number(b.dataset.d); J.diaVencimento = J.diaVencimento === d ? null : d; salvarJ();
+    $("#s-dias").querySelectorAll("button").forEach((x) => x.classList.toggle("sel", Number(x.dataset.d) === J.diaVencimento)); dia1();
+  });
+  if ($("#s-dias") && fixo) $("#s-dias").querySelectorAll("button").forEach((b) => b.classList.toggle("sel", Number(b.dataset.d) === prop.diaVencimento));
+  dia1();
+  if ($("#usar-pre")) $("#usar-pre").onclick = () => {
+    J.valor = Math.round(Number(oferta.valor)); J.prazo = oferta.prazo; $("#s-valor").value = J.valor.toLocaleString("pt-BR"); $("#s-faixa").value = J.valor; mudou(); calcular(true);
+  };
+  calcular(true);
+}
+
+// ---------- 3 · solicitação: revisão antes de enviar ----------
+async function telaRevisao() {
+  if (prop) return telaPedidoEnviado();
+  if (!sim?.id || Number(sim.valor) !== J.valor || sim.prazo !== J.prazo || Date.parse(sim.validaAte) < Date.now()) sim = await refazerSimulacao();
+  if (tela !== 3) return;
+  montar(`<p class="titulo">Confira seu pedido</p><p class="sub">Revise antes de enviar. Depois do envio, estas condições ficam fixas.</p>
+    <div class="card"><div style="display:flex;justify-content:space-between;align-items:center"><span class="rot">Empréstimo</span><button class="link" id="mudar-sim">Alterar</button></div>
+      <div class="grande">${brl(sim.valor)}</div>
+      <dl class="linhas"><dt>Parcelas</dt><dd>${sim.prazo}× de ${brl(sim.parcela)}</dd><dt>Cai na sua conta</dt><dd class="forte">${brl(sim.valorLiberado)}</dd>
+      <dt>Taxa de referência</dt><dd>${pct(sim.taxaMensal)} a.m.</dd><dt>CET</dt><dd>${pct(sim.cetAnual)} a.a.</dd><dt>Total a pagar</dt><dd>${brl(sim.totalPagar)}</dd>
+      ${R("vencimento") ? `<dt>1ª parcela</dt><dd>${primeiraParcela(J.diaVencimento, J.carencia).toLocaleDateString("pt-BR")}${J.diaVencimento ? ` · todo dia ${J.diaVencimento}` : ""}</dd>` : ""}
+      ${R("vencimento") && J.carencia > 30 && extraCarencia(J.carencia) ? `<dt>Parcela com ${J.carencia} dias</dt><dd>${sim.prazo}× de ${brl(parcelaComCarencia(sim.valor, sim.taxaMensal, sim.prazo, J.carencia))}</dd>` : ""}</dl></div>
+    ${R("finalidade") ? `<div class="card"><span class="rot">Para que é o dinheiro?</span><div class="chips" id="r-fin">${Recursos.painel.finalidade.opcoes.map((o) => `<button data-f="${esc(o)}" class="${J.finalidade === o ? "sel" : ""}">${esc(o)}</button>`).join("")}</div>
+      <div class="sub" style="margin:4px 0 0;font-size:12px">Opcional. Ajuda a montar a melhor oferta para você.</div></div>` : ""}
+    <div class="card"><div style="display:flex;justify-content:space-between;align-items:center"><span class="rot">Seus dados</span><button class="link" id="mudar-dados">Alterar</button></div>
+      <dl class="linhas"><dt>Nome</dt><dd>${esc(cliente.nome)}</dd><dt>CPF</dt><dd>${cpfFmt(cliente.cpf)}</dd><dt>Renda mensal</dt><dd>${brl(cliente.renda)}</dd></dl></div>
+    <label class="check ${J.consentimento ? "marcado" : ""}" id="c-label"><input type="checkbox" id="c-ok" ${J.consentimento ? "checked" : ""}><span>Autorizo a consulta do meu CPF em birôs de crédito para analisar este pedido.</span></label>`,
+    `<button class="primario" id="enviar" ${J.consentimento ? "" : "disabled"}>Enviar pedido</button>`, anterior(3));
+  $("#mudar-sim").onclick = () => ir(2); $("#mudar-dados").onclick = () => ir(1);
+  if ($("#r-fin")) $("#r-fin").querySelectorAll("button").forEach((b) => b.onclick = () => {
+    J.finalidade = J.finalidade === b.dataset.f ? null : b.dataset.f; salvarJ();
+    $("#r-fin").querySelectorAll("button").forEach((x) => x.classList.toggle("sel", x.dataset.f === J.finalidade));
+  });
+  $("#c-ok").onchange = (e) => { J.consentimento = e.target.checked; salvarJ(); $("#c-label").classList.toggle("marcado", J.consentimento); $("#enviar").disabled = !J.consentimento; };
+  $("#enviar").onclick = async () => {
+    // primeiro pedido neste aparelho: selfie com prova de vida (protege o CPF contra fraude)
+    if (R("prova-de-vida") && !porCliente("identidade")) {
+      const r = await Recursos.provaDeVida({ dentro: $("#app"), nome: cliente.nome });
+      if (!r) return avisar("Para sua segurança, confirme sua identidade antes de enviar.");
+      gravarCliente("identidade", r);
+    }
+    $("#enviar").disabled = true;
+    // a mesma chave em toda nova tentativa: toque duplo ou sinal fraco não criam dois pedidos
+    J.chaveEnvio = J.chaveEnvio || crypto.randomUUID(); salvarJ();
+    try {
+      const corpo = { clienteId: cliente.id, simulacaoId: sim.id };
+      if (R("finalidade") && J.finalidade) corpo.finalidade = J.finalidade;
+      if (R("vencimento") && J.diaVencimento) corpo.diaVencimento = J.diaVencimento;
+      if (R("vencimento") && J.carencia > 30 && carencias().includes(J.carencia)) corpo.carenciaDias = J.carencia;
+      prop = await api("/propostas", { metodo: "POST", chave: J.chaveEnvio, corpo });
+      J.propostaId = prop.id; salvarJ();
+      progresso = { bureau: "", oferta: false };
+      acompanhar(); ir(4);
+    } catch (e) {
+      if (e.codigo === "proposta-em-andamento") { await carregar(); avisar("Você já tem um pedido em andamento. Abrimos ele para você."); return ir(ondeParou()); }
+      avisar(e.message); $("#enviar").disabled = false;
+    }
+  };
+}
+function telaPedidoEnviado() {
+  montar(`<div class="icone-topo cheio">${IC.check}</div><p class="titulo">Pedido enviado</p><p class="sub">Enviado em ${dataHora(prop.criadaEm)}. Estas condições ficam fixas neste pedido.</p>
+    <div class="card"><span class="rot">Você pediu</span><div class="grande">${brl(prop.valorSolicitado)}</div>
+    <dl class="linhas"><dt>Parcelas simuladas</dt><dd>${prop.prazo}× de ${brl(prop.parcelaSimulada)}</dd><dt>Taxa de referência</dt><dd>${pct(prop.taxaSimulada)} a.m.</dd><dt>Renda informada</dt><dd>${brl(prop.rendaInformada)}</dd>
+    ${prop.finalidade ? `<dt>Finalidade</dt><dd>${esc(prop.finalidade)}</dd>` : ""}${prop.diaVencimento ? `<dt>Vencimento</dt><dd>todo dia ${prop.diaVencimento}</dd>` : ""}${prop.carenciaDias > 30 ? `<dt>1ª parcela</dt><dd>em ${prop.carenciaDias} dias</dd>` : ""}
+    <dt>Número do pedido</dt><dd>${numeroPedido(prop)}</dd></dl></div>`,
+    `<button class="primario" id="seguir">Ver a análise</button>`, anterior(3));
+  $("#seguir").onclick = () => ir(4);
+}
+
+// ---------- status ao vivo (SSE) ----------
+async function acompanhar() {
+  if (!prop) return;
+  if (fluxo) fluxo.abort();
+  const ctrl = new AbortController(); fluxo = ctrl; const id = prop.id;
+  try {
+    const r = await fetch(`/v1/propostas/${id}/acompanhamento`, { headers: { Authorization: "Bearer demo:" + sessao.cpf, Accept: "text/event-stream" }, signal: ctrl.signal });
+    const leitor = r.body.getReader(), dec = new TextDecoder(); let buf = "";
+    for (;;) {
+      const { value, done } = await leitor.read(); if (done) break;
+      buf += dec.decode(value, { stream: true }); let fim;
+      while ((fim = buf.indexOf("\n\n")) >= 0) {
+        const bloco = buf.slice(0, fim); buf = buf.slice(fim + 2);
+        const d = bloco.split("\n").filter((l) => l.startsWith("data:")).map((l) => l.slice(5)).join("\n");
+        if (d && fluxo === ctrl) await chegou(JSON.parse(d));
+      }
+    }
+    // a conexão fecha sozinha para poupar bateria; se ainda falta mudança automática, reabre
+    if (fluxo === ctrl && prop && (prop.status === "EM_ANALISE" || prop.status === "ACEITA")) setTimeout(() => fluxo === ctrl && acompanhar(), 1000);
+  } catch (e) { if (e.name !== "AbortError") setTimeout(() => fluxo === ctrl && acompanhar(), 3000); }
+}
+async function chegou(p) {
+  if (!prop || p.id !== prop.id) return;
+  const antes = prop.status; prop = p;
+  if (antes === p.status) return;
+  if (antes === "EM_ANALISE" && DECIDIDA.includes(p.status) && tela === 4) { marcarPassos(); await espera(900); if (tela === 4) ir(5); }
+  else if (p.status === "CONTRATADA" && (tela === 6 || tela === 7)) ir(7);
+  else if (typeof tela === "number") desenharEtapas();
+}
+// o andamento da análise, fase a fase
+window.aoBastidor = ({ titulo }) => {
+  if (/^GET \/bureau.*200/.test(titulo)) progresso.bureau = "ok";
+  else if (/^GET \/bureau.*503/.test(titulo)) progresso.bureau = "lento";
+  else if (/DLQ/.test(titulo)) progresso.bureau = "fora";
+  else if (/^Política/.test(titulo)) progresso.oferta = true;
+  if (tela === 4) marcarPassos();
+};
+
+// ---------- 4 · análise ----------
+function telaAnalise() {
+  const andando = prop.status === "EM_ANALISE";
+  montar(`<div class="icone-topo">${IC.relogio}</div><p class="titulo">${andando ? "Recebemos seu pedido e ele está em análise" : prop.status === "CANCELADA" ? "Pedido cancelado" : "Análise concluída"}</p>
+    <p class="sub">Pedido ${numeroPedido(prop)} · ${brl(prop.valorSolicitado)} em ${prop.prazo}×</p>
+    <div class="card"><ul class="passos" id="passos"></ul></div>
+    ${andando ? `<p class="sub" style="font-size:12.5px">Você pode fechar o app. Avisaremos assim que a análise terminar.</p>` : ""}`,
+    andando ? `<button class="secundario" id="atualizar" style="margin:0">Atualizar status</button><button class="texto perigo" id="cancelar">Cancelar pedido</button>`
+      : `<button class="primario" id="seguir">${prop.status === "CANCELADA" ? "Ver notificações" : "Ver o resultado"}</button>`, anterior(4));
+  marcarPassos();
+  if ($("#seguir")) $("#seguir").onclick = () => ir(prop.status === "CANCELADA" ? 8 : 5);
+  if ($("#atualizar")) $("#atualizar").onclick = async () => { try { const p = await api(`/propostas/${prop.id}`); if (p.status === prop.status) avisar("Ainda em análise. Esta tela atualiza sozinha."); await chegou(p); } catch (e) { avisar(e.message); } };
+  if ($("#cancelar")) $("#cancelar").onclick = async () => {
+    if (!(await confirmar("Cancelar o pedido?", "A análise para e o pedido é encerrado. Você pode fazer outro quando quiser.", "Cancelar pedido"))) return;
+    try { prop = await api(`/propostas/${prop.id}/cancelamento`, { metodo: "POST", chave: crypto.randomUUID() }); avisar("Pedido cancelado."); ir(8); } catch (e) { avisar(e.message); }
+  };
+}
+function marcarPassos() {
+  const ul = $("#passos"); if (!ul || !prop) return;
+  if (prop.status === "CANCELADA") { ul.innerHTML = `<li class="feito">Pedido recebido</li><li class="feito">Pedido cancelado por você</li>`; return; }
+  const decidido = prop.status !== "EM_ANALISE", b = decidido ? "ok" : progresso.bureau;
+  const itens = [
+    ["feito", "Pedido recebido"],
+    b === "ok" ? ["feito", "Histórico de crédito consultado"] : b === "lento" ? ["espera", "O birô de crédito está lento. Tentando de novo…"]
+      : b === "fora" ? ["espera", "O birô de crédito está fora do ar. Seu pedido está guardado e segue sozinho quando ele voltar."] : ["agora", "Consultando seu histórico de crédito"],
+    decidido || progresso.oferta ? ["feito", "Oferta calculada"] : b === "ok" ? ["agora", "Calculando sua oferta"] : ["", "Calculando sua oferta"],
+    decidido ? ["feito", "Decisão pronta"] : ["", "Decisão"],
+  ];
+  ul.innerHTML = itens.map(([c, t]) => `<li class="${c}">${t}</li>`).join("") + (decidido ? "" : `<li class="sem"><span class="vivo">Acompanhando ao vivo</span></li>`);
+}
+
+// ---------- 5 · resultado ----------
+async function telaResultado() {
+  const p = prop, c = p.condicoesFinais;
+  let analise = null; try { analise = await api(`/analises?propostaId=${p.id}`); } catch {}
+  if (tela !== 5) return;
+  if (p.status === "REPROVADA") {
+    const capacidade = analise?.motivo === "CAPACIDADE_PAGAMENTO", lembrar = porCliente("tentar-de-novo");
+    const quando = new Date(Date.now() + (capacidade ? 30 : 90) * 864e5).toLocaleDateString("pt-BR");
+    montar(`<div class="hero neutro"><span class="selo">AINDA NÃO FOI DESTA VEZ</span><h2>Vamos encontrar um caminho juntos</h2><p>Hoje não conseguimos aprovar este pedido. Isso não é definitivo, e você não está sozinho.</p></div>
+      <div class="card flutua"><div class="rot" style="margin-bottom:8px">O que pode ajudar</div><ul style="margin:0;padding-left:18px;font-size:13.5px">${(analise?.comoMelhorar || []).map((x) => `<li style="margin:0 0 6px">${esc(x)}</li>`).join("")}</ul></div>
+      <div class="opcoes">
+        ${R("ajuda") ? `<button class="opcao" id="esp"><span class="ic">💬</span><div><b>Conversar com um especialista</b><span>Ele olha seu caso e indica o melhor caminho</span></div><em>›</em></button>
+        <button class="opcao" id="liga"><span class="ic">📞</span><div><b>Prefiro que me liguem</b><span>Escolha um horário, sem custo</span></div><em>›</em></button>` : ""}
+        ${capacidade ? `<button class="opcao" id="menor"><span class="ic">${IC.dinheiro}</span><div><b>Simular um valor menor</b><span>Uma parcela que caiba em 30% da renda</span></div><em>›</em></button>` : ""}
+        <button class="opcao" id="lembrar"><span class="ic">${IC.calendario}</span><div><b>${lembrar ? "Vamos te avisar" : "Avise quando eu puder tentar de novo"}</b><span>${lembrar ? `Lembrete marcado para ${esc(lembrar)}` : `Sugerimos tentar a partir de ${quando}`}</span></div><em>${lembrar ? "✓" : "›"}</em></button>
+      </div>
+      <p class="sub" style="margin:14px 0 8px;font-size:12.5px">Consultar o pedido não afeta seu score. Seus dados continuam protegidos.</p>
+      ${linhaDoTempo(p)}`,
+      `<button class="primario" id="seguir">Ver notificações</button>`, anterior(5));
+    $("#seguir").onclick = () => ir(8);
+    const conversar = async (abrir) => { const r = await Recursos.ajuda({ dentro: $("#app"), etapa: 5, nome: cliente.nome, assunto: "Um especialista em crédito pode revisar seu caso com você, sem compromisso.", abrir });
+      if (r?.canal === "ligacao") avisar(`Ligação agendada: ${r.horario}.`); };
+    if ($("#esp")) $("#esp").onclick = () => conversar("chat");
+    if ($("#liga")) $("#liga").onclick = () => conversar();
+    if ($("#menor")) $("#menor").onclick = () => comecarNovo({ valor: Math.max(1000, Math.round(Number(p.valorSolicitado) / 2 / 500) * 500), prazo: Math.min(48, p.prazo * 2) });
+    $("#lembrar").onclick = () => { if (lembrar) return; gravarCliente("tentar-de-novo", quando); avisar(`Combinado. Avisaremos você em ${quando}.`); telaResultado(); };
+    return;
+  }
+  const contra = p.status === "CONTRAPROPOSTA" || Number(c.valor) < Number(p.valorSolicitado);
+  const decidir = p.status === "APROVADA" || p.status === "CONTRAPROPOSTA", menor = Number(c.taxaMensal) < Number(p.taxaSimulada);
+  const falta = Date.parse(p.prazoDecisao) - Date.now(), h = Math.max(0, Math.floor(falta / 36e5)), m = Math.max(0, Math.floor(falta % 36e5 / 6e4));
+  const situacao = decidir ? aviso("warn", `Oferta válida por 48 horas: faltam ${h} h ${String(m).padStart(2, "0")} min. Avisamos você antes de vencer.`)
+    : p.status === "RECUSADA" ? aviso("info", "Você recusou esta oferta.") : p.status === "EXPIRADA" ? aviso("info", "Esta oferta venceu.") : aviso("ok", "Você aceitou esta oferta.");
+  montar(`<div class="hero ${contra ? "ambar" : "ok"}"><span class="selo">${contra ? "CONTRAPROPOSTA" : "APROVADO"}</span>
+      <h2>${contra ? "Temos uma proposta para você" : "Seu empréstimo foi aprovado"}</h2>
+      <p>${contra ? `Você pediu ${brl(p.valorSolicitado)}. Podemos liberar ${brl(c.valor)}, com parcela que cabe na sua renda.` : menor ? `E com taxa menor que a da simulação: ${pct(c.taxaMensal)} a.m.` : "Confira as condições e decida."}</p></div>
+    <div class="card flutua"><span class="rot">Valor liberado</span><div class="grande">${brl(c.valor)}</div>
+      <dl class="linhas"><dt>Parcelas</dt><dd>${c.prazo}× de ${brl(c.parcela)}</dd><dt>Taxa</dt><dd>${menor ? `<s style="color:var(--muted);font-weight:500">${pct(p.taxaSimulada)}</s> ` : ""}${pct(c.taxaMensal)} a.m.</dd>
+      <dt>Cai na sua conta</dt><dd class="forte">${brl(c.valorLiberado)}</dd><dt>CET</dt><dd>${pct(c.cetAnual)} a.a.</dd><dt>Total a pagar</dt><dd>${brl(c.totalPagar)}</dd></dl></div>
+    ${contra ? `<details class="mais card"><summary>Por que este valor?</summary><p style="font-size:13.5px;margin:10px 0 0">Para sua segurança, a parcela precisa caber em até 30% da sua renda (${brl(p.rendaInformada)}) e no limite do seu perfil. Assim o empréstimo cabe no bolso até a última parcela.</p>
+      ${R("open-finance") && !porCliente("open-finance") ? `<p style="font-size:13.5px;margin:8px 0 0">Tem outra renda? Comprovar com Open Finance num próximo pedido pode liberar mais.</p>` : ""}</details>` : ""}
+    ${situacao}${R("ajuda") && decidir ? `<button class="secundario" id="esp" style="margin:0 0 12px">Ficou com dúvida? Fale com um especialista</button>` : ""}${linhaDoTempo(p)}`,
+    decidir ? `<button class="primario" id="seguir">Continuar para o aceite</button><button class="texto" id="recusar">Recusar oferta</button>`
+      : `<button class="primario" id="seguir">Continuar</button>`, anterior(5));
+  $("#seguir").onclick = () => ir(p.status === "RECUSADA" || p.status === "EXPIRADA" ? 8 : p.status === "CONTRATADA" ? 7 : 6);
+  if ($("#recusar")) $("#recusar").onclick = recusar;
+  if ($("#esp")) $("#esp").onclick = () => Recursos.ajuda({ dentro: $("#app"), etapa: 5, nome: cliente.nome }).then((r) => r?.canal === "ligacao" && avisar(`Ligação agendada: ${r.horario}.`));
+}
+async function recusar() {
+  if (!(await confirmar("Recusar a oferta?", "O pedido é encerrado. Você pode simular outro valor quando quiser.", "Recusar oferta"))) return;
+  try { prop = await api(prop.acoesDisponiveis.find((a) => a.nome === "recusar").href, { metodo: "POST", chave: crypto.randomUUID() }); ir(8); } catch (e) { avisar(e.message); }
+}
+const linhaDoTempo = (p) => `<details class="mais card"><summary>Linha do tempo do pedido</summary><ul class="tempo">${p.historicoStatus.map((x) =>
+  `<li><b>${(NOMES[x.status] || [x.status])[0]}</b><span>${dataHora(x.em)}</span></li>`).join("")}</ul></details>`;
+
+// ---------- 6 · aceite ----------
+function telaAceite() {
+  const p = prop, c = p.condicoesFinais;
+  if (p.status === "ACEITA" || p.status === "CONTRATADA") {
+    const pronto = p.status === "CONTRATADA";
+    montar(`<div class="icone-topo ${pronto ? "cheio" : ""}">${pronto ? IC.check : IC.relogio}</div><p class="titulo">${pronto ? "Oferta aceita" : "Gerando seu contrato…"}</p>
+      <p class="sub">${pronto ? `Você aceitou em ${dataHora(p.historicoStatus.find((x) => x.status === "ACEITA").em)}.` : "Leva poucos segundos. Esta tela atualiza sozinha."}</p>
+      <div class="card"><ul class="passos"><li class="feito">Oferta aceita</li><li class="${pronto ? "feito" : "agora"}">Contrato e cronograma</li><li class="${pronto ? "feito" : ""}">Dinheiro liberado na conta</li></ul></div>`,
+      pronto ? `<button class="primario" id="seguir">Ver o contrato</button>` : "", anterior(6));
+    if ($("#seguir")) $("#seguir").onclick = () => ir(7);
+    return;
+  }
+  const extra = extraCarencia(p.carenciaDias || 30);
+  const tres = window.__demo.cronograma(window.__demo.saldoCarencia(Math.round(Number(c.valor) * 100), Number(c.taxaMensal), extra), Number(c.taxaMensal), c.prazo).slice(0, 3);
+  montar(`<p class="titulo">Revise e aceite</p><p class="sub">Estas são as condições finais do seu empréstimo.</p>
+    <div class="card"><span class="rot">Você recebe na conta</span><div class="grande">${brl(c.valorLiberado)}</div>
+      <dl class="linhas"><dt>Valor do empréstimo</dt><dd>${brl(c.valor)}</dd><dt>IOF</dt><dd>${brl(c.iof)}</dd><dt>Parcelas</dt><dd>${c.prazo}× de ${brl(c.parcela)}</dd>
+      <dt>Taxa</dt><dd>${pct(c.taxaMensal)} a.m. · ${pct(c.taxaAnual)} a.a.</dd><dt>CET</dt><dd>${pct(c.cetMensal)} a.m. · ${pct(c.cetAnual)} a.a.</dd><dt>Total a pagar</dt><dd>${brl(c.totalPagar)}</dd>
+      <dt>1ª parcela</dt><dd>${primeiraParcela(p.diaVencimento, p.carenciaDias).toLocaleDateString("pt-BR")}${p.diaVencimento ? ` · todo dia ${p.diaVencimento}` : ""}</dd>
+      ${extra ? `<dt>Começa em ${p.carenciaDias} dias</dt><dd>parcela já inclui os juros desses dias</dd>` : ""}
+      ${R("pix") ? `<dt>Você recebe</dt><dd>via Pix, na chave CPF</dd>` : ""}</dl>
+      <details class="mais" style="margin-top:12px"><summary>Primeiras parcelas</summary>${tres.map((x) => `<div class="parcela"><div>${x.numero}ª parcela<span>juros ${brl(x.jurosC / 100)} · amortização ${brl(x.amortC / 100)}</span></div><b>${brl(x.valorC / 100)}</b></div>`).join("")}</details></div>
+    <label class="check ${J.aceiteMarcado ? "marcado" : ""}" id="c-label"><input type="checkbox" id="c-ok" ${J.aceiteMarcado ? "checked" : ""}><span>Li e concordo com as condições, o custo efetivo total e o cronograma de pagamento.</span></label>`,
+    `<button class="primario" id="aceitar" ${J.aceiteMarcado ? "" : "disabled"}>${R("biometria") ? "Assinar com biometria" : "Aceitar e contratar"}</button><button class="texto" id="recusar">Recusar oferta</button>`, anterior(6));
+  $("#c-ok").onchange = (e) => { J.aceiteMarcado = e.target.checked; salvarJ(); $("#c-label").classList.toggle("marcado", J.aceiteMarcado); $("#aceitar").disabled = !J.aceiteMarcado; };
+  $("#recusar").onclick = recusar;
+  $("#aceitar").onclick = async () => {
+    // o aceite é a assinatura do contrato: confirmação com a biometria do aparelho (ou a senha)
+    // recurso trocável: sem biometria, o aceite é o próprio toque (ou a senha, se o banco exigir confirmação forte)
+    const usar = R("biometria") || R("confirmacaoForte");
+    const ev = usar ? await Biometria.confirmar({ dentro: $("#app"), usuario: { id: sessao.cpf, nome: cliente.nome }, titulo: "Assine com sua biometria",
+      texto: `Confirme o empréstimo de ${brl(c.valor)} em ${c.prazo}× de ${brl(c.parcela)}.`, senha: (s) => s === "senha123", senhaSugerida: "senha123" }) : { metodo: null, em: new Date().toISOString() };
+    if (!ev) return;
+    $("#aceitar").disabled = true;
+    J.aceite = ev; J.chaveAceite = J.chaveAceite || crypto.randomUUID(); salvarJ();
+    const corpo = ev.metodo ? { metodo: ev.metodo, dispositivo: navigator.userAgent.slice(0, 80) } : undefined;
+    try { prop = await api(p.acoesDisponiveis.find((a) => a.nome === "aceitar").href, { metodo: "POST", chave: J.chaveAceite, corpo }); acompanhar(); telaAceite(); }
+    catch (e) { avisar(e.message); $("#aceitar").disabled = false; }
+  };
+}
+
+// ---------- 7 · contratação ----------
+async function telaContrato() {
+  if (prop.status !== "CONTRATADA") { tela = 6; return telaAceite(); }
+  const c = await api(`/contratos/${prop.contratoId}`), parcelas = await api(`/contratos/${prop.contratoId}/parcelas`);
+  if (tela !== 7) return;
+  montar(`<div class="icone-topo cheio">${IC.check}</div><p class="titulo">Contrato efetivado</p>
+    <p class="sub">Contrato ${esc(c.numero)} · ${dataBr(c.dataContratacao)}. ${brl(c.valorLiberado)} liberados na sua conta.</p>
+    <button class="secundario" id="pdf" style="margin:0 0 12px">Baixar contrato (PDF)</button>
+    <div class="cartoes"><div class="card"><span class="rot">Valor</span><div class="grande" style="font-size:19px">${brl(c.valor)}</div></div>
+      <div class="card"><span class="rot">Parcela</span><div class="grande" style="font-size:19px">${brl(c.valorParcela)}</div></div></div>
+    <div class="card"><div class="rot">Próximas parcelas</div>${parcelas.slice(0, 3).map((x) => `<div class="parcela"><div><b>${x.numero}ª · vence ${dataBr(x.vencimento)}</b><span>juros ${brl(x.juros)} · amortização ${brl(x.amortizacao)}</span></div><b>${brl(x.valor)}</b></div>`).join("")}
+      <p class="sub" style="margin:8px 0 6px;font-size:12.5px">Saldo devedor após a 3ª parcela: ${brl(parcelas[2].saldoDevedor)}</p>
+      <details class="mais"><summary>Ver todas as ${parcelas.length} parcelas</summary>${parcelas.slice(3).map((x) => `<div class="parcela"><div><b>${x.numero}ª · ${dataBr(x.vencimento)}</b><span>saldo depois: ${brl(x.saldoDevedor)}</span></div><b>${brl(x.valor)}</b></div>`).join("")}</details></div>
+    ${R("antecipacao") || R("lembretes") ? `<div class="opcoes" style="margin:0 0 12px">
+      ${R("antecipacao") ? `<button class="opcao" id="adiantar"><span class="ic">${IC.raio}</span><div><b>Adiantar parcelas</b><span>Pague antes e economize juros</span></div><em>›</em></button>` : ""}
+      ${R("lembretes") ? `<button class="opcao" id="lembretes"><span class="ic">${IC.calendario}</span><div><b>Lembretes de vencimento</b><span id="l-txt">${textoLembrete()}</span></div><em>›</em></button>` : ""}</div>` : ""}
+    <div class="card"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px"><div><b style="font-size:14px">Quer quitar antes?</b><div class="sub" style="margin:2px 0 0;font-size:12.5px">Os juros futuros saem da conta.</div></div><button class="link" id="quitar">Ver valor</button></div><div id="q-res"></div></div>
+    ${R("ofertas") ? `<div class="rot" style="margin:4px 0 6px">Para você</div><div class="opcoes" style="margin:0 0 12px">${OFERTAS.map((o, i) => `<button class="opcao" data-of="${i}"><span class="ic">${o.ic}</span><div><b>${o.titulo}</b><span>${o.texto}</span></div><em>›</em></button>`).join("")}</div>` : ""}
+    ${aviso("info", `Mudou de ideia? Você pode desistir até ${dataBr(new Date(Date.parse(c.dataContratacao + "T12:00:00") + 7 * 864e5).toISOString().slice(0, 10))}, sete dias após a contratação, devolvendo o valor recebido, sem juros.`)}`,
+    `<button class="primario" id="seguir">Ver notificações</button>`, anterior(7));
+  $("#seguir").onclick = () => ir(8);
+  $("#corpo").querySelectorAll("[data-of]").forEach((b) => b.onclick = () => {
+    const o = OFERTAS[b.dataset.of];
+    Recursos.ajuda({ dentro: $("#app"), nome: cliente.nome, assunto: o.assunto }).then((r) => r?.canal === "ligacao" && avisar(`Ligação agendada: ${r.horario}.`));
+  });
+  if ($("#adiantar")) $("#adiantar").onclick = async () => {
+    const r = await Recursos.antecipar({ dentro: $("#app"), parcelas, taxaMensal: c.taxaMensal });
+    if (r) avisar(`Pronto: enviamos o Pix de ${brl(r.valor)} para adiantar ${r.quantidade} parcela${r.quantidade > 1 ? "s" : ""}. Economia de ${brl(r.desconto)}.`);
+  };
+  if ($("#lembretes")) $("#lembretes").onclick = async () => {
+    const r = await Recursos.lembretes({ dentro: $("#app"), atual: porCliente("lembretes") });
+    if (r) { gravarCliente("lembretes", r); $("#l-txt").textContent = textoLembrete(); avisar("Preferências salvas."); }
+  };
+  // o dinheiro "cai na conta": aviso de Pix na primeira vez que o contrato aparece
+  if (R("pix") && !J.pixVisto) { J.pixVisto = true; salvarJ(); Recursos.pix({ dentro: $("#app"), valor: c.valorLiberado, chave: "CPF " + cpfFmt(sessao.cpf).replace(/^\d{3}\.(\d{3})\.(\d{3})-\d{2}$/, "***.$1.$2-**") }); }
+  $("#pdf").onclick = async () => {
+    $("#pdf").disabled = true;
+    try { await ContratoPDF.baixar({ contrato: c, parcelas, cliente, aceite: J.aceite }); avisar("Contrato baixado."); } catch (e) { avisar("Não foi possível gerar o PDF."); }
+    $("#pdf").disabled = false;
+  };
+  $("#quitar").onclick = async () => {
+    try {
+      const q = await api(`/contratos/${prop.contratoId}/quitacao`);
+      $("#q-res").innerHTML = `<dl class="linhas" style="margin-top:12px"><dt>Para quitar hoje</dt><dd class="forte">${brl(q.valorQuitacao)}</dd><dt>${q.parcelasEmAberto} parcelas em aberto</dt><dd>${brl(q.valorNominal)}</dd><dt>Desconto dos juros</dt><dd>${brl(q.desconto)}</dd></dl>`;
+    } catch (e) { avisar(e.message); }
+  };
+}
+
+// ofertas do banco depois da contratação: opcionais, nunca condição para o empréstimo; cada banco põe as suas
+const OFERTAS = [
+  { ic: "🛡️", titulo: "Proteja suas parcelas", texto: "Seguro opcional que quita o saldo em caso de imprevisto",
+    assunto: "Proteção das parcelas: um seguro opcional que quita o saldo em caso de morte, invalidez ou perda de emprego. Não é obrigatório para o empréstimo." },
+  { ic: "💳", titulo: "Cartão sem anuidade", texto: "Pré-aprovado para quem já é cliente",
+    assunto: "Cartão de crédito sem anuidade, com limite definido na análise. Um especialista explica as condições." },
+];
+function textoLembrete() {
+  const l = porCliente("lembretes") || { ativo: true, dias: 3, push: true };
+  if (!l.ativo) return "Desligados";
+  const canais = [l.push && "celular", l.email && "e-mail", l.sms && "SMS"].filter(Boolean).join(", ") || "celular";
+  return `${l.dias} dia${l.dias > 1 ? "s" : ""} antes, por ${canais}`;
+}
+
+// ---------- 8 · notificações ----------
+async function telaNotificacoes() {
+  if (fluxo && FINAL.includes(prop.status)) { fluxo.abort(); fluxo = null; }
+  montar(`<p class="titulo">Notificações</p><p class="sub">Tudo o que aconteceu com o pedido ${numeroPedido(prop)}.</p><div id="n-lista"><div class="carregando">Carregando…</div></div>`,
+    `<button class="primario" id="novo">Fazer um novo pedido</button><button class="texto" id="inicio">Voltar ao início</button>`, anterior(8));
+  $("#inicio").onclick = () => ir("inicio");
+  $("#novo").onclick = comecarNovo;
+  const pg = await api(`/notificacoes?propostaId=${prop.id}`);
+  if (tela !== 8) return;
+  const lemb = R("lembretes") && prop.status === "CONTRATADA" ? `<div class="aviso info">${IC.info}<span>Lembretes de vencimento: ${textoLembrete()}.</span></div>` : "";
+  $("#n-lista").innerHTML = lemb + pg.dados.slice().reverse().map((n) => `<div class="notif"><b>${esc(n.titulo)}</b>${esc(n.mensagem)}<time>${dataHora(n.criadaEm)}</time></div>`).join("") || '<p class="sub">Nenhum aviso ainda.</p>';
+}
+
+// ---------- menu ----------
+$("#avatar").onclick = async () => {
+  const v = await folha(`<h3>${sessao ? esc(sessao.nome) : "Menu"}</h3><p>${sessao ? "CPF " + cpfFmt(sessao.cpf) : "Empréstimo Pessoal"}</p>
+    <div class="menu">${sessao ? `<button data-v="inicio">Início</button><button data-v="trocar">Entrar com outra conta</button>` : `<button data-v="login">Entrar</button>`}
+    ${R("ajuda") ? `<button data-v="ajuda">Ajuda e atendimento</button>` : ""}${R("tema-escuro") ? `<button data-v="aparencia">Aparência</button>` : ""}
+    ${sessao ? `<button data-v="sair">Sair</button>` : ""}
+    <div class="sec">Demonstração</div>
+    <button data-v="recursos">Recursos do banco</button>
+    <button data-v="zerar" style="color:var(--bad)">↺ Recomeçar a jornada</button></div>`);
+  if (v === "inicio") ir("inicio");
+  if (v === "ajuda") abrirAjuda();
+  if (v === "aparencia") { const r = await Recursos.aparencia({ dentro: $("#app"), atual: aparencia }); if (r) { aparencia = r; guardar.gravar("v2-aparencia", r); aplicarAparencia(); } }
+  if (v === "recursos") painelRecursos();
+  if (v === "login") ir("login");
+  if (v === "trocar" || v === "sair") { if (fluxo) fluxo.abort(); fluxo = null; sessao = null; J = null; cliente = sim = prop = null; guardar.apagar("v2-sessao"); ir(v === "trocar" ? "login" : "inicio"); }
+  if (v === "zerar") recomecar();
+};
+// recomeçar do zero: apaga clientes, pedidos e escolhas desta sessão
+async function recomecar() {
+  if (!(await confirmar("Recomeçar a jornada?", "Volta para a tela inicial e apaga os pedidos e escolhas feitos até aqui.", "Recomeçar"))) return;
+  if (fluxo) fluxo.abort();
+  window.reiniciarDemonstracao();
+}
+
+function abrirAjuda() {
+  Recursos.ajuda({ dentro: $("#app"), etapa: tela, nome: cliente?.nome }).then((r) => r?.canal === "ligacao" && avisar(`Ligação agendada: ${r.horario}.`));
+}
+$("#ajuda").onclick = abrirAjuda;
+// demonstração: liga e desliga os recursos opcionais, como cada banco faria no application.yml
+const NOMES_RECURSOS = [["preAprovado", "Pré-aprovado na tela inicial"], ["vencimento", "Escolha do dia de vencimento"], ["finalidade", "Finalidade do empréstimo"],
+  ["open-finance", "Renda via Open Finance"], ["prova-de-vida", "Selfie com prova de vida"], ["biometria", "Assinatura com biometria"],
+  ["pix", "Crédito via Pix"], ["antecipacao", "Adiantar parcelas"], ["lembretes", "Lembretes de vencimento"], ["ajuda", "Ajuda e especialista"], ["tema-escuro", "Aparência (tema e texto maior)"], ["ofertas", "Ofertas do banco após contratar"]];
+async function painelRecursos() {
+  const v = await Recursos.folha($("#app"), `<h3>Recursos do banco</h3><p>Cada banco liga só o que quiser. Desligado, o recurso some do app e da API.</p>
+    ${NOMES_RECURSOS.map(([k, n]) => `<label class="rc-sw"><div><b>${n}</b></div><input type="checkbox" data-k="${k}" ${R(k) ? "checked" : ""}></label>`).join("")}
+    <button class="rc-bt" id="rc-ok">Aplicar</button><button class="rc-tx" data-fechar>Cancelar</button>`, (el, fechar) => {
+    el.querySelector("#rc-ok").onclick = () => { const m = {}; el.querySelectorAll("[data-k]").forEach((i) => m[i.dataset.k] = i.checked); fechar(m); };
+  });
+  if (!v) return;
+  const atual = guardar.ler("v2-recursos", {}) || {}, app = Object.assign({}, atual.app);
+  for (const [k, on] of Object.entries(v)) { if (["preAprovado", "vencimento", "finalidade"].includes(k)) atual[k] = { ...(atual[k] || {}), ativo: on }; else app[k] = on; }
+  atual.app = app; guardar.gravar("v2-recursos", atual);
+  location.reload();
+}
+
+const relogio = () => { $("#hora").textContent = new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }); };
+relogio(); setInterval(relogio, 15000);
+(async () => {
+  try { Recursos.definir(await api("/recursos")); } catch {}
+  aplicarAparencia();
+  if (sessao) { try { await carregar(); return ir(cliente ? "inicio" : 1); } catch { sessao = null; } }
+  ir("inicio");
+})();
+</script>
+<script>
+if ("serviceWorker" in navigator && location.protocol !== "file:") {
+  addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
+}
+</script>
+</body>
+</html>
