@@ -1228,7 +1228,10 @@ window.DEMO_OPCOES = { clientesPrecadastrados: false, persistir: true, sessao: t
         let real = false;
         try {
           if (navigator.mediaDevices?.getUserMedia && location.protocol !== "file:") {
-            stream = await Promise.race([navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } }), espera(4000).then(() => null)]);
+            // tempo para a pessoa tocar em "Permitir"; se a câmera chegar depois, é desligada na hora
+            const pedido = navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
+            stream = await Promise.race([pedido, espera(20000).then(() => null)]);
+            if (!stream) pedido.then((s) => s.getTracks().forEach((tr) => tr.stop())).catch(() => {});
             if (stream) { const v = document.createElement("video"); v.autoplay = v.muted = v.playsInline = true; v.srcObject = stream; cam.innerHTML = ""; cam.appendChild(v); real = true; }
           }
         } catch { stream = null; }
